@@ -1,0 +1,35 @@
+db:
+        image: postgres:9.4.1
+        volumes:
+                - ${PWD}/dbschema/schema.pgsql:/tmp/schema.sql
+                - ${PWD}/dbschema/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh
+        environment:
+                - POSTGRES_PASSWORD=00000000
+                - DB_USER=try5adm
+                - DB_PASSWORD=00000000
+                - DB_NAME=try5db
+                - DB_ENCODING=UTF-8
+                - DB_PG_SCHEMA_FILE=/tmp/schema.sql
+        ports:
+        - "5432"
+
+try5:
+        build: .
+        #dockerfile: Dockerfile-devel
+        #image: docker.acb.info:5000/try5api:v0.0.1
+        environment:
+                - TRY5_PORT=8000
+                - LOGXI=*
+                - TRY5_VERBOSE=debug
+                - TRY5_STORE_HOST=db.acb.info
+                - TRY5_STORE_PORT=5432
+                - TRY5_STORE_NAME=try5db
+                - TRY5_STORE_USER=try5adm
+                - TRY5_STORE_PASS=00000000
+                - TRY5_MQTT_URI=tcp://mqtt.acb.info:1883
+                - TRY5_MQTT_TOPIC=/ans/inscripciones/minicopa
+        command: go run *.go
+        ports:
+                - "8000:8000"
+        links:
+                - db:db.acb.info

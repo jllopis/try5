@@ -1,0 +1,165 @@
+# Git ignores
+# Make it global with
+# git config --global core.excludesfile ~/.dotfiles.d/packages/git/global_ignore_file
+
+.*_lck
+*.pem
+
+uploads/
+.secret
+ansible/id_rsa*
+ansible/id_dsa*
+ansible/deployer_rsa*
+ansible/ansible_dsa*
+ansible/ansible_rsa*
+doc/html/
+doc/epub/
+doc/pdf/
+
+# Vim Ignores
+.*.s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+# Go Ignores
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+log/
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+
+# Erlang Ignores
+.eunit
+deps
+*.o
+*.beam
+*.plt
+erl_crash.dump
+
+# Ruby Ignores
+*.gem
+*.rbc
+.bundle
+.config
+coverage
+InstalledFiles
+lib/bundler/man
+pkg
+rdoc
+spec/reports
+test/tmp
+test/version_tmp
+tmp
+.rbx/
+
+# YARD artifacts
+.yardoc
+_yardoc
+
+# C Ignores
+# Object files
+*.o
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Mercurial Ignores
+/.hg/*
+*/.hg/*
+.hgignore
+
+# OSX Ignores
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# Netbeans Ignores
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+
+# Emacs Ignores
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+.elc
+auto-save-list
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
+
+# Eclipse Ignores
+*.pydevproject
+.project
+.metadata
+#bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpath
