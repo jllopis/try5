@@ -28,7 +28,6 @@ try5:
                 - TRY5_STORE_PASS=00000000
                 - TRY5_MQTT_URI=tcp://mqtt.acb.info:1883
                 - TRY5_MQTT_TOPIC=/ans/inscripciones/minicopa
-        command: go run *.go
         ports:
                 - "8000:8000"
         links:

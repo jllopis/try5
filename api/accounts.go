@@ -12,9 +12,9 @@ import (
 // GetAllAccounts devuelve una lista con todos los accounts de la base de datos
 // curl -ks https://b2d:8000/v1/accounts | jp -
 func (ctx *ApiContext) GetAllAccounts(w http.ResponseWriter, r *http.Request) {
-	var res []*account.account
+	var res []*account.Account
 	var err error
-	if res, err = ctx.DB.LoadAllaccounts(); err != nil {
+	if res, err = ctx.DB.LoadAllAccounts(); err != nil {
 		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}

@@ -24,7 +24,7 @@ type Config struct {
 	StoreHost    string `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
 	StorePort    int    `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
 	StoreName    string `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
-	Storeaccount string `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_account, flag storeaccount"`
+	StoreAccount string `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_account, flag storeaccount"`
 	StorePass    string `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
 }
 
@@ -56,7 +56,7 @@ func init() {
 		Host:     config.GetString("StoreHost"),
 		Port:     dbPort,
 		DBName:   config.GetString("StoreName"),
-		account:  config.GetString("Storeaccount"),
+		Account:  config.GetString("StoreAccount"),
 		Password: config.GetString("StorePass"),
 	})
 	if err != nil {
