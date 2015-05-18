@@ -24,7 +24,7 @@ type PsqlStore struct {
 type PsqlStoreOptions struct {
 	Host         string
 	Port         int
-	account      string
+	Account      string
 	Password     string
 	DBName       string
 	SSLMode      string
@@ -47,7 +47,7 @@ func OpenPgSQLStore(opts *PsqlStoreOptions) (*PsqlStore, error) {
 	if r.MaxOpenConns == 0 {
 		r.MaxIdleConns = 30
 	}
-	ds := fmt.Sprintf("account=%s dbname=%s sslmode=%s password=%s host=%s port=%d", r.account, r.DBName, r.SSLMode, r.Password, r.Host, r.Port)
+	ds := fmt.Sprintf("account=%s dbname=%s sslmode=%s password=%s host=%s port=%d", r.Account, r.DBName, r.SSLMode, r.Password, r.Host, r.Port)
 	db, err := sql.Open("postgres", ds)
 	if err != nil {
 		return nil, err
@@ -75,17 +75,17 @@ var (
 		"WHERE deleted IS NULL", nil)
 )
 
-func (s *PsqlStore) Loadaccount(uuid string) (*account.account, error) {
-	//var res *account.account
-	res := &account.account{}
+func (s *PsqlStore) LoadAccount(uuid string) (*account.Account, error) {
+	//var res *account.Account
+	res := &account.Account{}
 	if err := s.C.Select("*").From("accounts").Where("uid=$1 AND deleted IS NULL", uuid).QueryStruct(res); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (s *PsqlStore) LoadAllaccounts() ([]*account.account, error) {
-	var res []*account.account
+func (s *PsqlStore) LoadAllAccounts() ([]*account.Account, error) {
+	var res []*account.Account
 	if err := s.C.Select("*").From("accounts").ScopeMap(notDeleted, nil).QueryStructs(&res); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (s *PsqlStore) LoadAllaccounts() ([]*account.account, error) {
 }
 
 // Saveaccount creates a new account if account.UID has zero value or updates the account otherwise.
-func (s *PsqlStore) Saveaccount(account *account.account) (*account.account, error) {
+func (s *PsqlStore) SaveAccount(account *account.Account) (*account.Account, error) {
 	now := time.Now().UTC()
 	account.Updated = &now
 	switch account.UID {
@@ -115,7 +115,7 @@ func (s *PsqlStore) Saveaccount(account *account.account) (*account.account, err
 // Si la petición tiene éxito, devuelve el número de registros eliminados.
 //
 // Si aparece un error, devuelve el error del tipo *pq.Error
-func (s *PsqlStore) Deleteaccount(uuid string) (int, error) {
+func (s *PsqlStore) DeleteAccount(uuid string) (int, error) {
 	var err error
 	var res *dat.Result
 	if res, err = s.C.DeleteFrom("accounts").Where("uid = $1", uuid).Exec(); err != nil {

@@ -38,14 +38,14 @@ func (account *Account) hashPassword(password []byte) error {
 	return nil
 }
 
-func (account *account) MatchPassword(password string) error {
+func (account *Account) MatchPassword(password string) error {
 	if err := bcrypt.CompareHashAndPassword([]byte(*account.Password), []byte(password)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (account *account) UpdatePassword(newPassword string) error {
+func (account *Account) UpdatePassword(newPassword string) error {
 	err := account.hashPassword([]byte(newPassword))
 	if err != nil {
 		return err
@@ -54,12 +54,12 @@ func (account *account) UpdatePassword(newPassword string) error {
 	return nil
 }
 
-func (account *account) DeletePassword() error {
+func (account *Account) DeletePassword() error {
 	account.Password = nil
 	return nil
 }
 
-func (account *account) Delete() error {
+func (account *Account) Delete() error {
 	*account.Deleted = true
 
 	return nil
