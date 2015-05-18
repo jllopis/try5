@@ -36,7 +36,7 @@ func main() {
 	var cmdTimes = &cobra.Command{
 		Use:   "times [# times] [string to echo]",
 		Short: "Echo anything to the screen more times",
-		Long: `echo things multiple times back to the user by providing
+		Long: `echo things multiple times back to the account by providing
         a count and a string.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			for i := 0; i < echoTimes; i++ {

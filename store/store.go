@@ -1,9 +1,10 @@
 package store
 
-import "github.com/jllopis/try5/user"
+import "github.com/jllopis/try5/account"
 
 type Storer interface {
-	LoadUser(uuid string) (*user.User, error)
-	SaveUser(user *user.User) (*user.User, error)
-	DeleteUser(uuid string) (int, error)
+	LoadAllAccounts() ([]*account.Account, error)
+	LoadAccount(uuid string) (*account.Account, error)
+	SaveAccount(account *account.Account) (*account.Account, error)
+	DeleteAccount(uuid string) (int, error)
 }

@@ -7,8 +7,7 @@ import (
 
 	"code.google.com/p/go-uuid/uuid"
 
-	"github.com/jllopis/try5/user"
-	_ "github.com/lib/pq"
+	"github.com/jllopis/try5/account"
 	"github.com/mgutz/dat/v1"
 	"github.com/mgutz/dat/v1/sqlx-runner"
 )
@@ -25,7 +24,7 @@ type PsqlStore struct {
 type PsqlStoreOptions struct {
 	Host         string
 	Port         int
-	User         string
+	account      string
 	Password     string
 	DBName       string
 	SSLMode      string
@@ -48,7 +47,7 @@ func OpenPgSQLStore(opts *PsqlStoreOptions) (*PsqlStore, error) {
 	if r.MaxOpenConns == 0 {
 		r.MaxIdleConns = 30
 	}
-	ds := fmt.Sprintf("user=%s dbname=%s sslmode=%s password=%s host=%s port=%d", r.User, r.DBName, r.SSLMode, r.Password, r.Host, r.Port)
+	ds := fmt.Sprintf("account=%s dbname=%s sslmode=%s password=%s host=%s port=%d", r.account, r.DBName, r.SSLMode, r.Password, r.Host, r.Port)
 	db, err := sql.Open("postgres", ds)
 	if err != nil {
 		return nil, err
@@ -71,49 +70,55 @@ func OpenPgSQLStore(opts *PsqlStoreOptions) (*PsqlStore, error) {
 	return r, nil
 }
 
-func (s *PsqlStore) LoadUser(uuid string) (*user.User, error) {
-	var res *user.User
-	if err := s.C.Select("*").From("users").Where("uuid=$1 AND deleted IS NULL", uuid).QueryStruct(&res); err != nil {
+var (
+	notDeleted = dat.NewScope(
+		"WHERE deleted IS NULL", nil)
+)
+
+func (s *PsqlStore) Loadaccount(uuid string) (*account.account, error) {
+	//var res *account.account
+	res := &account.account{}
+	if err := s.C.Select("*").From("accounts").Where("uid=$1 AND deleted IS NULL", uuid).QueryStruct(res); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (s *PsqlStore) LoadAllUsers() ([]*user.User, error) {
-	var res []*user.User
-	if err := s.C.Select("*").From("users").Where("deleted IS NULL").QueryStructs(&res); err != nil {
+func (s *PsqlStore) LoadAllaccounts() ([]*account.account, error) {
+	var res []*account.account
+	if err := s.C.Select("*").From("accounts").ScopeMap(notDeleted, nil).QueryStructs(&res); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-// SaveUser creates a new user if user.UID has zero value or updates the user otherwise.
-func (s *PsqlStore) SaveUser(user *user.User) (*user.User, error) {
+// Saveaccount creates a new account if account.UID has zero value or updates the account otherwise.
+func (s *PsqlStore) Saveaccount(account *account.account) (*account.account, error) {
 	now := time.Now().UTC()
-	user.Updated = now
-	switch user.UID {
-	case "":
-		user.UID = uuid.New()
-		user.Created = now
-		if err := s.C.InsertInto("users").Blacklist("id").Record(user).Returning("id").QueryScalar(&user.ID); err != nil {
-			return user, err
+	account.Updated = &now
+	switch account.UID {
+	case nil:
+		*account.UID = uuid.New()
+		account.Created = &now
+		if err := s.C.InsertInto("accounts").Blacklist("id").Record(account).Returning("id").QueryScalar(&account.ID); err != nil {
+			return account, err
 		}
 	default:
-		if _, err := s.C.Update("users").SetBlacklist(&user, "id", "created").Where("id=$1", user.ID).Exec(); err != nil {
+		if _, err := s.C.Update("accounts").SetBlacklist(&account, "id", "uid", "created").Where("id=$1", account.ID).Exec(); err != nil {
 			return nil, err
 		}
 	}
-	return user, nil
+	return account, nil
 }
 
-// DeleteUser elimina de la base de datos el User cuyo id coincide con id.
+// Deleteaccount elimina de la base de datos el account cuyo id coincide con id.
 // Si la petición tiene éxito, devuelve el número de registros eliminados.
 //
 // Si aparece un error, devuelve el error del tipo *pq.Error
-func (s *PsqlStore) DeleteUser(uuid string) (int, error) {
+func (s *PsqlStore) Deleteaccount(uuid string) (int, error) {
 	var err error
 	var res *dat.Result
-	if res, err = s.C.DeleteFrom("users").Where("uuid = $1", uuid).Exec(); err != nil {
+	if res, err = s.C.DeleteFrom("accounts").Where("uid = $1", uuid).Exec(); err != nil {
 		return 0, err
 	}
 	if res.RowsAffected == 0 {

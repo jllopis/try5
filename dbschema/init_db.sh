@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${DB_USER:=db_user}
+: ${DB_USER:=db_USER}
 : ${DB_PASSWORD:=db_pass}
 : ${DB_NAME:=db_name}
 : ${DB_ENCODING:=UTF-8}

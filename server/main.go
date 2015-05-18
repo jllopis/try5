@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -18,13 +19,13 @@ import (
 
 // Config proporciona la configuración del servicio para ser utilizado por getconf
 type Config struct {
-	Port      string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
-	Verbose   bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
-	StoreHost string `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
-	StorePort int    `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
-	StoreName string `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
-	StoreUser string `getconf:"etcd app/try5/conf/storeuser, env TRY5_STORE_USER, flag storeuser"`
-	StorePass string `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
+	Port         string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
+	Verbose      bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
+	StoreHost    string `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
+	StorePort    int    `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
+	StoreName    string `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
+	Storeaccount string `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_account, flag storeaccount"`
+	StorePass    string `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
 }
 
 var (
@@ -55,7 +56,7 @@ func init() {
 		Host:     config.GetString("StoreHost"),
 		Port:     dbPort,
 		DBName:   config.GetString("StoreName"),
-		User:     config.GetString("StoreUser"),
+		account:  config.GetString("Storeaccount"),
 		Password: config.GetString("StorePass"),
 	})
 	if err != nil {
@@ -99,12 +100,12 @@ func main() {
 
 // setupAPIRoutes añade al router los puntos de acceso a los servicios ofrecidos
 func setupAPIRoutes(apisrv *aloja.Subrouter) {
-	// Users
-	//apisrv.Get("/users", http.HandlerFunc(apiCtx.GetAllUsers))
-	//apisrv.Get("/users/:id", http.HandlerFunc(apiCtx.GetUserByID))
-	//apisrv.Post("/users", http.HandlerFunc(apiCtx.NewUser))
-	//apisrv.Put("/users/:id", http.HandlerFunc(apiCtx.UpdateUser))
-	//apisrv.Delete("/users/:id", http.HandlerFunc(apiCtx.DeleteUser))
+	// accounts
+	apisrv.Get("/accounts", http.HandlerFunc(apiCtx.GetAllAccounts))
+	apisrv.Get("/accounts/:id", http.HandlerFunc(apiCtx.GetAccountByID))
+	//apisrv.Post("/accounts", http.HandlerFunc(apiCtx.NewAccount))
+	//apisrv.Put("/accounts/:id", http.HandlerFunc(apiCtx.UpdateAccount))
+	//apisrv.Delete("/accounts/:id", http.HandlerFunc(apiCtx.DeleteAccount))
 }
 
 // setupSignals configura la captura de señales de sistema y actúa basándose en ellas

@@ -2,30 +2,38 @@ package mem
 
 import (
 	"code.google.com/p/go-uuid/uuid"
-	"github.com/jllopis/try5/user"
+	"github.com/jllopis/try5/account"
 )
 
 type MemStore struct {
-	users map[string]*user.User
+	accounts map[string]*account.account
 }
 
 func NewMemStore() *MemStore {
-	return &MemStore{make(map[string]*user.User, 10)}
+	return &MemStore{make(map[string]*account.account, 10)}
 }
 
-func (s *MemStore) LoadUser(uuid string) (*user.User, error) {
-	return s.users[uuid], nil
-}
-
-func (s *MemStore) SaveUser(user *user.User) (*user.User, error) {
-	if user.UID == "" {
-		user.UID = uuid.New()
+func (s *MemStore) LoadAllaccounts() ([]*account.account, error) {
+	accounts := make([]*account.account, len(s.accounts))
+	for _, v := range s.accounts {
+		accounts = append(accounts, v)
 	}
-	s.users[user.UID] = user
-	return user, nil
+	return accounts, nil
 }
 
-func (s *MemStore) DeleteUser(uuid string) (int, error) {
-	delete(s.users, uuid)
+func (s *MemStore) Loadaccount(uuid string) (*account.account, error) {
+	return s.accounts[uuid], nil
+}
+
+func (s *MemStore) Saveaccount(account *account.account) (*account.account, error) {
+	if account.UID == "" {
+		account.UID = uuid.New()
+	}
+	s.accounts[account.UID] = account
+	return account, nil
+}
+
+func (s *MemStore) Deleteaccount(uuid string) (int, error) {
+	delete(s.accounts, uuid)
 	return 1, nil
 }

@@ -33,9 +33,9 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 -- ----------------------------
---  Table structure for "users"
+--  Table structure for "accounts"
 -- ----------------------------
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS accounts (
     id        SERIAL,
     uid       VARCHAR(36),
     email     VARCHAR(100),
@@ -47,12 +47,12 @@ CREATE TABLE IF NOT EXISTS users (
     updated   TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted   TIMESTAMP,
 
-    CONSTRAINT users_pkey PRIMARY KEY (id)
+    CONSTRAINT accounts_pkey PRIMARY KEY (id)
 )
 WITH (OIDS=FALSE);
-ALTER TABLE users OWNER TO try5adm;
-CREATE INDEX user_idx ON users USING btree (id);
-CREATE INDEX user_email_idx ON users USING btree (email);
+ALTER TABLE accounts OWNER TO try5adm;
+CREATE INDEX account_idx ON accounts USING btree (id);
+CREATE INDEX account_email_idx ON accounts USING btree (email);
 
 CREATE TABLE rbac_role (
     id SERIAL NOT NULL PRIMARY KEY,
@@ -94,11 +94,11 @@ ALTER TABLE public.rbac_grant OWNER TO try5adm;
 -- Data for Name: accounts; Type: TABLE DATA; Schema: public; Owner: try5adm
 --
 
-COPY users (id, uid, name, email, password, active, gravatar, created, updated) FROM stdin (DELIMITER ',');
-1,ce30ed61-6b5d-4136-95a3-ab11e3e97d87,Test User,user@test.com,$2a$10$T/tj9OCnQ4XUf7qcVsQsIuV9AxQgHaoaNxSOEnvdGdm.BEPpEG56e,true,\N,2013-08-18 17:46:23.748705,2013-08-18 17:46:23.748705
+COPY accounts (id, uid, name, email, password, active, gravatar, created, updated) FROM stdin (DELIMITER ',');
+1,ce30ed61-6b5d-4136-95a3-ab11e3e97d87,Test account,account@test.com,$2a$10$T/tj9OCnQ4XUf7qcVsQsIuV9AxQgHaoaNxSOEnvdGdm.BEPpEG56e,true,\N,2013-08-18 17:46:23.748705,2013-08-18 17:46:23.748705
 \.
 
-ALTER SEQUENCE IF EXISTS users_id_seq RESTART WITH 2;
+ALTER SEQUENCE IF EXISTS accounts_id_seq RESTART WITH 2;
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON SCHEMA public FROM postgres;
