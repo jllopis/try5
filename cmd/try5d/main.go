@@ -103,7 +103,7 @@ func setupAPIRoutes(apisrv *aloja.Subrouter) {
 	// accounts
 	apisrv.Get("/accounts", http.HandlerFunc(apiCtx.GetAllAccounts))
 	apisrv.Get("/accounts/:id", http.HandlerFunc(apiCtx.GetAccountByID))
-	//apisrv.Post("/accounts", http.HandlerFunc(apiCtx.NewAccount))
+	apisrv.Post("/accounts", http.HandlerFunc(apiCtx.NewAccount))
 	//apisrv.Put("/accounts/:id", http.HandlerFunc(apiCtx.UpdateAccount))
 	//apisrv.Delete("/accounts/:id", http.HandlerFunc(apiCtx.DeleteAccount))
 }

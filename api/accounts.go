@@ -2,11 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/jllopis/aloja"
 	"github.com/jllopis/try5/account"
+	"github.com/lib/pq"
 )
 
 // GetAllAccounts devuelve una lista con todos los accounts de la base de datos
@@ -45,24 +47,28 @@ func (ctx *ApiContext) GetAccountByID(w http.ResponseWriter, r *http.Request) {
 	ctx.Render.JSON(w, http.StatusOK, res)
 }
 
-//// NewAccount crea un nuevo account.
-//// curl -k https://b2d:8000/v1/accounts -X POST -d '{}'
-//func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
-//	var data account.Account
-//	err := json.NewDecoder(r.Body).Decode(&data)
-//	if err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
-//		return
-//	}
-//	if outdata, err := ctx.DB.NewAccount(data); err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Detail, Table: err.Table, Code: string(err.Code)})
-//		logger.Error("func NewAccount", "error", err)
-//		return
-//	} else {
-//		ctx.Render.JSON(w, http.StatusOK, outdata)
-//	}
-//}
-//
+// NewAccount crea un nuevo account.
+// curl -k https://b2d:8000/v1/accounts -X POST -d '{}'
+func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
+	var data *account.Account
+	err := json.NewDecoder(r.Body).Decode(data)
+	if err != nil {
+		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
+		return
+	}
+	if outdata, err := ctx.DB.SaveAccount(data); err != nil {
+		if _, ok := err.(*pq.Error); ok {
+			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.(*pq.Error).Detail, Table: err.(*pq.Error).Table, Code: string(err.(*pq.Error).Code)})
+		} else {
+			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "500"})
+		}
+		logger.Error("func NewAccount", "error", err)
+		return
+	} else {
+		ctx.Render.JSON(w, http.StatusOK, outdata)
+	}
+}
+
 //// UpdateAccount actualiza los datos del account y devuelve el objeto actualizado.
 //// curl -ks https://b2d:8000/v1/accounts/3 -X PUT -d '{}' | jp -
 //func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
