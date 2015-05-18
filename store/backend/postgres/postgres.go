@@ -98,8 +98,10 @@ func (s *PsqlStore) SaveAccount(account *account.Account) (*account.Account, err
 	account.Updated = &now
 	switch account.UID {
 	case nil:
-		*account.UID = uuid.New()
+		u := uuid.New()
+		account.UID = &u
 		account.Created = &now
+		account.UpdatePassword(*account.Password)
 		if err := s.C.InsertInto("accounts").Blacklist("id").Record(account).Returning("id").QueryScalar(&account.ID); err != nil {
 			return account, err
 		}
