@@ -24,7 +24,7 @@ type PsqlStore struct {
 type PsqlStoreOptions struct {
 	Host         string
 	Port         int
-	Account      string
+	User         string
 	Password     string
 	DBName       string
 	SSLMode      string
@@ -47,7 +47,7 @@ func OpenPgSQLStore(opts *PsqlStoreOptions) (*PsqlStore, error) {
 	if r.MaxOpenConns == 0 {
 		r.MaxIdleConns = 30
 	}
-	ds := fmt.Sprintf("account=%s dbname=%s sslmode=%s password=%s host=%s port=%d", r.Account, r.DBName, r.SSLMode, r.Password, r.Host, r.Port)
+	ds := fmt.Sprintf("user=%s dbname=%s sslmode=%s password=%s host=%s port=%d", r.User, r.DBName, r.SSLMode, r.Password, r.Host, r.Port)
 	db, err := sql.Open("postgres", ds)
 	if err != nil {
 		return nil, err
