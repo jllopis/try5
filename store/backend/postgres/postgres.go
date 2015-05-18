@@ -104,6 +104,7 @@ func (s *PsqlStore) SaveAccount(account *account.Account) (*account.Account, err
 			return account, err
 		}
 	default:
+		// TODO check if the provided uid effectively exists in the database prior to update
 		if _, err := s.C.Update("accounts").SetBlacklist(&account, "id", "uid", "created").Where("id=$1", account.ID).Exec(); err != nil {
 			return nil, err
 		}
