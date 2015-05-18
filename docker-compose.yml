@@ -18,6 +18,8 @@ try5:
         #dockerfile: Dockerfile-devel
         #image: docker.acb.info:5000/try5api:v0.0.1
         environment:
+                - TRY5_SSLCERT=/etc/try5/certs/cert.pem
+                - TRY5_SSLKEY=/etc/try5/certs/key.pem
                 - TRY5_PORT=8000
                 - LOGXI=*
                 - TRY5_VERBOSE=debug

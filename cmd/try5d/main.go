@@ -19,13 +19,15 @@ import (
 
 // Config proporciona la configuración del servicio para ser utilizado por getconf
 type Config struct {
-	Port         string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
-	Verbose      bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
-	StoreHost    string `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
-	StorePort    int    `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
-	StoreName    string `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
-	StoreAccount string `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_account, flag storeaccount"`
-	StorePass    string `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
+	SslCert   string `getconf:"etcd app/try5/conf/sslcert" env TRY5_SSLCERT, flag sslcert`
+	SslKey    string `getconf:"etcd app/try5/conf/sslkey" env TRY5_SSLKEY, flag sslkey`
+	Port      string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
+	Verbose   bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
+	StoreHost string `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
+	StorePort int    `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
+	StoreName string `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
+	StoreUser string `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_USER, flag storeuser"`
+	StorePass string `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
 }
 
 var (
@@ -56,7 +58,7 @@ func init() {
 		Host:     config.GetString("StoreHost"),
 		Port:     dbPort,
 		DBName:   config.GetString("StoreName"),
-		Account:  config.GetString("StoreAccount"),
+		User:     config.GetString("StoreUser"),
 		Password: config.GetString("StorePass"),
 	})
 	if err != nil {
@@ -86,7 +88,7 @@ func main() {
 	logger.Info("Go", "Version", runtime.Version())
 	logger.Info("API Server", "Status", "started", "port", port)
 
-	server := aloja.New().Port(port).SSLConf("certs/cert.pem", "certs/key.pem")
+	server := aloja.New().Port(port).SSLConf(config.GetString("SslCert"), config.GetString("SslKey"))
 	// Use CORS Handler in every request and log every request
 	server.AddGlobal(mw.CorsHandler, mw.LogHandler)
 
