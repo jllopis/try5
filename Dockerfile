@@ -8,4 +8,3 @@ WORKDIR /go/src/${APP}
 RUN godep go install ${APP}/cmd/try5d
 EXPOSE 8000
 ENTRYPOINT /go/bin/try5d
-CMD ["app"]
