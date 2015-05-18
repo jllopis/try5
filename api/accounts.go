@@ -48,15 +48,15 @@ func (ctx *ApiContext) GetAccountByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewAccount crea un nuevo account.
-// curl -k https://b2d:8000/v1/accounts -X POST -d '{}'
+// curl -k https://b2d:8000/v1/accounts -X POST -d '{"email":"tu2@test.com","name":"test user 2","password":"1234","active":true}'
 func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
-	var data *account.Account
-	err := json.NewDecoder(r.Body).Decode(data)
+	var data account.Account
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
 		return
 	}
-	if outdata, err := ctx.DB.SaveAccount(data); err != nil {
+	if outdata, err := ctx.DB.SaveAccount(&data); err != nil {
 		if _, ok := err.(*pq.Error); ok {
 			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.(*pq.Error).Detail, Table: err.(*pq.Error).Table, Code: string(err.(*pq.Error).Code)})
 		} else {
