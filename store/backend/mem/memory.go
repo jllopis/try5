@@ -6,30 +6,30 @@ import (
 )
 
 type MemStore struct {
-	accounts map[string]*account.account
+	accounts map[string]*account.Account
 }
 
 func NewMemStore() *MemStore {
-	return &MemStore{make(map[string]*account.account, 10)}
+	return &MemStore{make(map[string]*account.Account, 10)}
 }
 
-func (s *MemStore) LoadAllaccounts() ([]*account.account, error) {
-	accounts := make([]*account.account, len(s.accounts))
+func (s *MemStore) LoadAllaccounts() ([]*account.Account, error) {
+	accounts := make([]*account.Account, len(s.accounts))
 	for _, v := range s.accounts {
 		accounts = append(accounts, v)
 	}
 	return accounts, nil
 }
 
-func (s *MemStore) Loadaccount(uuid string) (*account.account, error) {
+func (s *MemStore) Loadaccount(uuid string) (*account.Account, error) {
 	return s.accounts[uuid], nil
 }
 
-func (s *MemStore) Saveaccount(account *account.account) (*account.account, error) {
-	if account.UID == "" {
-		account.UID = uuid.New()
+func (s *MemStore) Saveaccount(account *account.Account) (*account.Account, error) {
+	if account.UID == nil {
+		*account.UID = uuid.New()
 	}
-	s.accounts[account.UID] = account
+	s.accounts[*account.UID] = account
 	return account, nil
 }
 
