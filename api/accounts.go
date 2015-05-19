@@ -89,6 +89,8 @@ func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		logger.Info("func UpdateAccount", "updated register", uid)
 	}
 
+	// TODO if newdata.UID is nil check if register exist in db _before_ update.
+	// If do not exist, return error and quit
 	if newdata.UID == nil {
 		newdata.UID = &uid
 	} else {
@@ -103,7 +105,7 @@ func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		logger.Error("func UpdateAccount", "error", err.Error())
 		return
 	} else {
-		logger.Info("func UpdateAccount", "updated", "ok", "uid", newdata.ID)
+		logger.Info("func UpdateAccount", "updated", "ok", "uid", *newdata.UID)
 		ctx.Render.JSON(w, http.StatusOK, newdata)
 		return
 	}
