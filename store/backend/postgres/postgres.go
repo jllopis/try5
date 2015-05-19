@@ -96,18 +96,20 @@ func (s *PsqlStore) LoadAllAccounts() ([]*account.Account, error) {
 func (s *PsqlStore) SaveAccount(account *account.Account) (*account.Account, error) {
 	now := time.Now().UTC()
 	account.Updated = &now
+	if account.Password != nil {
+		account.UpdatePassword(*account.Password)
+	}
 	switch account.UID {
 	case nil:
 		u := uuid.New()
 		account.UID = &u
 		account.Created = &now
-		account.UpdatePassword(*account.Password)
 		if err := s.C.InsertInto("accounts").Blacklist("id").Record(account).Returning("id").QueryScalar(&account.ID); err != nil {
 			return account, err
 		}
 	default:
 		// TODO check if the provided uid effectively exists in the database prior to update
-		if _, err := s.C.Update("accounts").SetBlacklist(&account, "id", "uid", "created").Where("id=$1", account.ID).Exec(); err != nil {
+		if _, err := s.C.Update("accounts").SetBlacklist(account, "id", "uid", "created").Where("uid=$1", *account.UID).Exec(); err != nil {
 			return nil, err
 		}
 	}
