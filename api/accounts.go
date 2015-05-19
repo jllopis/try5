@@ -24,13 +24,13 @@ func (ctx *ApiContext) GetAllAccounts(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAccountByID devuelve el account de la base de datos que coincide con el ID suministrado
-// curl -ks https://b2d:8000/v1/accounts/1 | jp -
+// curl -ks https://b2d:8000/v1/accounts/342947fd-6c4b-4d2b-85ab-da14b37d047a | jp -
 func (ctx *ApiContext) GetAccountByID(w http.ResponseWriter, r *http.Request) {
 	var res *account.Account
 	var err error
 	var id string
-	if id = aloja.Params(r).ByName("id"); id == "" {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "missing id"})
+	if id = aloja.Params(r).ByName("uid"); id == "" {
+		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
 		return
 	}
 	if res, err = ctx.DB.LoadAccount(id); err != nil {
@@ -69,46 +69,46 @@ func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//// UpdateAccount actualiza los datos del account y devuelve el objeto actualizado.
-//// curl -ks https://b2d:8000/v1/accounts/3 -X PUT -d '{}' | jp -
-//func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
-//	newdata := &account.Account{}
-//	var err error
-//	var id int64
-//	if id, err = strconv.ParseInt(aloja.Params(r).ByName("id"), 10, 64); err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
-//		return
-//	}
-//	err = json.NewDecoder(r.Body).Decode(&newdata)
-//	if err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
-//		logger.Error("func UpdateAccount", "error", err.Error())
-//		return
-//	}
-//	if logger.IsDebug() {
-//		logger.Info("func UpdateAccount", "updated register", id)
-//	}
-//
-//	if newdata.ID == nil {
-//		newdata.ID = &id
-//	} else {
-//		if *newdata.ID != int64(id) {
-//			ctx.Render.JSON(w, http.StatusInternalServerError, fmt.Sprintf("los identificadores de registro no coindiden: body: %v - path: %v", newdata.ID, id))
-//			logger.Error("func UpdateAccount", "error", err.Error())
-//			return
-//		}
-//	}
-//	if _, err := ctx.DB.Updateaccount(*newdata); err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-//		logger.Error("func UpdateAccount", "error", err.Error())
-//		return
-//	} else {
-//		logger.Info("func UpdateAccount", "updated", "ok", "id", newdata.ID)
-//		ctx.Render.JSON(w, http.StatusOK, newdata)
-//		return
-//	}
-//}
-//
+// UpdateAccount actualiza los datos del account y devuelve el objeto actualizado.
+// curl -ks https://b2d:8000/v1/accounts/342947fd-6c4b-4d2b-85ab-da14b37d047a -X PUT -d '{}' | jp -
+func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
+	var newdata account.Account
+	var err error
+	var uid string
+	if uid = aloja.Params(r).ByName("uid"); uid == "" {
+		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: "uid cannot be nil", Table: "accounts"})
+		return
+	}
+	err = json.NewDecoder(r.Body).Decode(&newdata)
+	if err != nil {
+		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
+		logger.Error("func UpdateAccount", "error", err.Error())
+		return
+	}
+	if logger.IsDebug() {
+		logger.Info("func UpdateAccount", "updated register", uid)
+	}
+
+	if newdata.UID == nil {
+		newdata.UID = &uid
+	} else {
+		if *newdata.UID != uid {
+			ctx.Render.JSON(w, http.StatusInternalServerError, fmt.Sprintf("los identificadores de registro no coindiden: body: %v - path: %v", *newdata.UID, uid))
+			logger.Error("func UpdateAccount", "error", err.Error())
+			return
+		}
+	}
+	if _, err := ctx.DB.SaveAccount(&newdata); err != nil {
+		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
+		logger.Error("func UpdateAccount", "error", err.Error())
+		return
+	} else {
+		logger.Info("func UpdateAccount", "updated", "ok", "uid", newdata.ID)
+		ctx.Render.JSON(w, http.StatusOK, newdata)
+		return
+	}
+}
+
 //// DeleteAccount elimina el account solicitado.
 //// curl -ks https://b2d:8000/v1/accounts/3 -X DELETE | jp -
 //func (ctx *ApiContext) DeleteAccount(w http.ResponseWriter, r *http.Request) {
