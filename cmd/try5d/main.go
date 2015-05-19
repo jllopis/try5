@@ -6,28 +6,31 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"bitbucket.org/jllopis/getconf"
 	"github.com/gorilla/securecookie"
 	"github.com/jllopis/aloja"
 	"github.com/jllopis/aloja/mw"
 	"github.com/jllopis/try5/api"
-	"github.com/jllopis/try5/store/backend/postgres"
+	"github.com/jllopis/try5/store/backend/boltdb"
 	"github.com/mgutz/logxi/v1"
 	"github.com/unrolled/render"
 )
 
 // Config proporciona la configuración del servicio para ser utilizado por getconf
 type Config struct {
-	SslCert   string `getconf:"etcd app/try5/conf/sslcert" env TRY5_SSLCERT, flag sslcert`
-	SslKey    string `getconf:"etcd app/try5/conf/sslkey" env TRY5_SSLKEY, flag sslkey`
-	Port      string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
-	Verbose   bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
-	StoreHost string `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
-	StorePort int    `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
-	StoreName string `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
-	StoreUser string `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_USER, flag storeuser"`
-	StorePass string `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
+	SslCert      string `getconf:"etcd app/try5/conf/sslcert" env TRY5_SSLCERT, flag sslcert`
+	SslKey       string `getconf:"etcd app/try5/conf/sslkey" env TRY5_SSLKEY, flag sslkey`
+	Port         string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
+	Verbose      bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
+	StorePath    string `getconf:"etcd app/try5/conf/storepath, env TRY5_STORE_PATH, flag storepath"`
+	StoreTimeout int    `getconf:"etcd app/try5/conf/storetimeout, env TRY5_STORE_TIMEOUT, flag storetimeout"`
+	//	StoreHost    string        `getconf:"etcd app/try5/conf/storehost, env TRY5_STORE_HOST, flag storehost"`
+	//	StorePort    int           `getconf:"etcd app/try5/conf/storeport, env TRY5_STORE_PORT, flag storeport"`
+	//	StoreName    string        `getconf:"etcd app/try5/conf/storename, env TRY5_STORE_NAME, flag storename"`
+	//	StoreUser    string        `getconf:"etcd app/try5/conf/storeaccount, env TRY5_STORE_USER, flag storeuser"`
+	//	StorePass    string        `getconf:"etcd app/try5/conf/storepass, env TRY5_STORE_PASS, flag storepass"`
 }
 
 var (
@@ -49,22 +52,31 @@ func init() {
 	config = getconf.New(&Config{}, "TRY5", false, "")
 	config.Parse()
 	logger = log.New("try5api")
-	dbPort := 5432
-	if p, err := config.GetInt("StorePort"); err == nil {
-		logger.Info("Store", "port", p)
-		dbPort = int(p)
+	//	dbPort := 5432
+	//	if p, err := config.GetInt("StorePort"); err == nil {
+	//		logger.Info("Store", "port", p)
+	//		dbPort = int(p)
+	//	}
+	//	rs, err := psql.OpenPgSQLStore(&psql.PsqlStoreOptions{
+	//		Host:     config.GetString("StoreHost"),
+	//		Port:     dbPort,
+	//		DBName:   config.GetString("StoreName"),
+	//		User:     config.GetString("StoreUser"),
+	//		Password: config.GetString("StorePass"),
+	//	})
+	timeout := 5 * time.Second
+	if to, err := config.GetInt("StoreTimeout"); err == nil {
+		logger.Info("Store", "connect timeout (s)", to)
+		timeout = time.Duration(to) * time.Second
 	}
-	rs, err := psql.OpenPgSQLStore(&psql.PsqlStoreOptions{
-		Host:     config.GetString("StoreHost"),
-		Port:     dbPort,
-		DBName:   config.GetString("StoreName"),
-		User:     config.GetString("StoreUser"),
-		Password: config.GetString("StorePass"),
+	rs := bolt.NewBoltStore(&bolt.BoltStoreOptions{
+		Dbpath:  config.GetString("StorePath"),
+		Timeout: timeout,
 	})
-	if err != nil {
-		logger.Fatal("Cannot connect to file store", "error", err)
+	if rs == nil {
+		logger.Fatal("Cannot connect to file store", "db file path", rs.Dbpath)
 	} else {
-		logger.Info("Connected to store backend", "host", rs.Host, "port", rs.Port)
+		logger.Info("Connected to store backend", "driver", "boltdb", "db file path", rs.Dbpath)
 	}
 	r := render.New(render.Options{
 		Charset:    "UTF-8",
@@ -77,6 +89,8 @@ func init() {
 }
 
 func main() {
+	// Be sure we close the database when exit
+	defer apiCtx.DB.Close()
 	setupSignals()
 	port := config.GetString("Port")
 	if port == "" {
