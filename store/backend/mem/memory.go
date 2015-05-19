@@ -3,14 +3,20 @@ package mem
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/jllopis/try5/account"
+	"github.com/jllopis/try5/store"
 )
 
 type MemStore struct {
 	accounts map[string]*account.Account
+	status   int
 }
 
 func NewMemStore() *MemStore {
-	return &MemStore{make(map[string]*account.Account, 10)}
+	return &MemStore{accounts: make(map[string]*account.Account, 10), status: store.CONNECTED}
+}
+
+func (s *MemStore) Status() (int, string) {
+	return s.status, store.StatusStr[s.status]
 }
 
 func (s *MemStore) LoadAllaccounts() ([]*account.Account, error) {
