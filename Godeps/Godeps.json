@@ -16,6 +16,11 @@
 			"Rev": "35bc42037350f0078e3c974c6ea690f1926603ab"
 		},
 		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.0-79-g2c04100",
+			"Rev": "2c04100eb9793f2b8541d243494e2909d2112325"
+		},
+		{
 			"ImportPath": "github.com/coreos/etcd/etcdserver/etcdhttp/httptypes",
 			"Comment": "v2.0.4-220-g862c16e",
 			"Rev": "862c16e8215a79bbd27275281f2181e20ae2b08b"
@@ -52,7 +57,7 @@
 		},
 		{
 			"ImportPath": "github.com/jllopis/aloja",
-			"Rev": "31133a5959a7bc44b66994eeaf7b84b73ce05f80"
+			"Rev": "53355cbeaf5ac5686e0de6258fbf3e7ac35987aa"
 		},
 		{
 			"ImportPath": "github.com/jmoiron/sqlx",
