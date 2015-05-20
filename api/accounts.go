@@ -56,6 +56,10 @@ func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
 		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
 		return
 	}
+	if err = data.ValidateFields(); err != nil {
+		ctx.Render.JSON(w, http.StatusBadRequest, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
+		return
+	}
 	if outdata, err := ctx.DB.SaveAccount(&data); err != nil {
 		if _, ok := err.(*pq.Error); ok {
 			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.(*pq.Error).Detail, Table: err.(*pq.Error).Table, Code: string(err.(*pq.Error).Code)})
@@ -85,6 +89,10 @@ func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		logger.Error("func UpdateAccount", "error", err.Error())
 		return
 	}
+	if err = newdata.ValidateFields(); err != nil {
+		ctx.Render.JSON(w, http.StatusBadRequest, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
+		return
+	}
 	if logger.IsDebug() {
 		logger.Info("func UpdateAccount", "updated register", uid)
 	}
@@ -111,28 +119,27 @@ func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//// DeleteAccount elimina el account solicitado.
-//// curl -ks https://b2d:8000/v1/accounts/3 -X DELETE | jp -
-//func (ctx *ApiContext) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-//	var id int64
-//	var err error
-//	if id, err = strconv.ParseInt(aloja.Params(r).ByName("id"), 10, 64); err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-//		return
-//	}
-//	if n, err := ctx.DB.DeleteAccount(id); err != nil {
-//		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-//		logger.Error("func DeleteAccount", "error", err)
-//		return
-//	} else {
-//		switch n {
-//		case 0:
-//			logger.Info("func DeleteAccount", "error", "id no encontrado", "id", id)
-//			ctx.Render.JSON(w, http.StatusOK, &logMessage{Status: "error", Action: "delete", Info: "no se ha encontrado el registro", Table: "accounts", Code: "RNF-11", ID: id})
-//		default:
-//			logger.Info("func DeleteAccount", "registro eliminado", id)
-//			ctx.Render.JSON(w, http.StatusOK, &logMessage{Status: "ok", Action: "delete", Info: "eliminado registro", Table: "accounts", ID: id})
-//		}
-//		return
-//	}
-//}
+// DeleteAccount elimina el account solicitado.
+// curl -ks https://b2d:8000/v1/accounts/3 -X DELETE | jp -
+func (ctx *ApiContext) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	var uid string
+	if uid = aloja.Params(r).ByName("uid"); uid == "" {
+		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "delete", Info: "uid cannot be nil", Table: "accounts"})
+		return
+	}
+	if n, err := ctx.DB.DeleteAccount(uid); err != nil {
+		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
+		logger.Error("func DeleteAccount", "error", err)
+		return
+	} else {
+		switch n {
+		case 0:
+			logger.Info("func DeleteAccount", "error", "uid no encontrado", "uid", uid)
+			ctx.Render.JSON(w, http.StatusOK, &logMessage{Status: "error", Action: "delete", Info: "no se ha encontrado el registro", Table: "accounts", Code: "RNF-11", UID: uid})
+		default:
+			logger.Info("func DeleteAccount", "registro eliminado", uid)
+			ctx.Render.JSON(w, http.StatusOK, &logMessage{Status: "ok", Action: "delete", Info: uid, Table: "accounts", UID: uid})
+		}
+		return
+	}
+}
