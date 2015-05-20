@@ -3,6 +3,7 @@ package bolt
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -59,12 +60,11 @@ func (s *BoltStore) LoadAllAccounts() ([]*account.Account, error) {
 		bucket := tx.Bucket([]byte("accounts"))
 		bs := bucket.Stats()
 		fmt.Printf("\nBoltDB STATS:\n%#v\n", bs)
-		accounts = make([]*account.Account, bs.KeyN)
 		bucket.ForEach(func(k, v []byte) error {
 			var a *account.Account
 			dec := gob.NewDecoder(bytes.NewBuffer(v))
 			err := dec.Decode(&a)
-			if err == nil {
+			if err == nil && a != nil {
 				accounts = append(accounts, a)
 			}
 			return nil
@@ -91,6 +91,33 @@ func (s *BoltStore) LoadAccount(uuid string) (*account.Account, error) {
 		return nil, err
 	}
 	return a, nil
+}
+
+func (s *BoltStore) GetAccountByEmail(email string) (*account.Account, error) {
+	var found *account.Account
+	err := s.C.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("accounts"))
+		bucket.ForEach(func(k, v []byte) error {
+			var a *account.Account
+			dec := gob.NewDecoder(bytes.NewBuffer(v))
+			err := dec.Decode(&a)
+			if err == nil && a != nil {
+				if email == *a.Email {
+					found = a
+					return nil
+				}
+			}
+			return nil
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if found != nil {
+		return found, nil
+	}
+	return nil, errors.New("email not found")
 }
 
 func (s *BoltStore) SaveAccount(account *account.Account) (*account.Account, error) {

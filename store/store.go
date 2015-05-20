@@ -9,6 +9,7 @@ type Storer interface {
 	LoadAccount(uuid string) (*account.Account, error)
 	SaveAccount(account *account.Account) (*account.Account, error)
 	DeleteAccount(uuid string) (int, error)
+	GetAccountByEmail(email string) (*account.Account, error)
 }
 
 const (
