@@ -19,7 +19,7 @@ type logMessage struct {
 	Info   string `json:"info,omitempty"`
 	Table  string `json:"table,omitempty"`
 	Code   string `json:"code,omitempty"`
-	ID     int64  `json:"id,omitempty"`
+	UID    string `json:"id,omitempty"`
 }
 
 var logger log.Logger
