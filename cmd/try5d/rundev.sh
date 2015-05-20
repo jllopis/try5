@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 : ${TRY5_STORE_PATH:=/tmp/try5.db}
 : ${TRY5_STORE_TIMEOUT:=10}
-: ${TRY5_PORT:=8000}
+: ${TRY5_PORT:=9000}
 : ${TRY5_VERBOSE:=debug}
 : ${TRY5_SSLCERT:=certs/cert.pem}
 : ${TRY5_SSLKEY:=certs/key.pem}
