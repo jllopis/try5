@@ -22,6 +22,7 @@ try5:
                 - TRY5_SSLKEY=/etc/try5/certs/key.pem
                 - TRY5_PORT=8000
                 - LOGXI=*
+                - LOGXI_FORMAT=happy
                 - TRY5_VERBOSE=debug
                 - TRY5_STORE_PATH=/var/lib/try5/store.db
                 - TRY5_STORE_TIMEOUT=10
