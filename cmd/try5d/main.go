@@ -15,7 +15,6 @@ import (
 	"github.com/jllopis/try5/api"
 	"github.com/jllopis/try5/store/backend/boltdb"
 	"github.com/mgutz/logxi/v1"
-	"github.com/rs/cors"
 	"github.com/unrolled/render"
 )
 
@@ -105,7 +104,7 @@ func main() {
 
 	server := aloja.New().Port(port).SSLConf(config.GetString("SslCert"), config.GetString("SslKey"))
 	// Use CORS Handler in every request and log every request
-	cors := mw.CorsHandler(cors.Options{
+	cors := mw.CorsHandler(mw.CorsOptions{
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"},
 		AllowCredentials: true,
 		Debug:            true,
