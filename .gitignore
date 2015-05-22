@@ -48,30 +48,6 @@ _testmain.go
 
 *.exe
 
-# Erlang Ignores
-.eunit
-deps
-*.o
-*.beam
-*.plt
-erl_crash.dump
-
-# Ruby Ignores
-*.gem
-*.rbc
-.bundle
-.config
-coverage
-InstalledFiles
-lib/bundler/man
-pkg
-rdoc
-spec/reports
-test/tmp
-test/version_tmp
-tmp
-.rbx/
-
 # YARD artifacts
 .yardoc
 _yardoc
