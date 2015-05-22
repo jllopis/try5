@@ -1,7 +1,7 @@
 TRY5
 ====
 
-Version: v0.0.1
+Version: v0.0.2
 
 Try5 is a new intent to develop an easy and basic authentication system. The functionalyty is exposed through REST Web Services.
 
