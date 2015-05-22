@@ -57,7 +57,7 @@
 		},
 		{
 			"ImportPath": "github.com/jllopis/aloja",
-			"Rev": "53355cbeaf5ac5686e0de6258fbf3e7ac35987aa"
+			"Rev": "60751e97377d9e056f82d5730107a28b9f83af21"
 		},
 		{
 			"ImportPath": "github.com/jmoiron/sqlx",
@@ -101,6 +101,10 @@
 		{
 			"ImportPath": "github.com/nbio/httpcontext",
 			"Rev": "d2f7bb023e6ebb562d7d5e07a5f3a6ce935f4666"
+		},
+		{
+			"ImportPath": "github.com/rs/cors",
+			"Rev": "5e4ce6bc0ecd3472f6f943666d84876691be2ced"
 		},
 		{
 			"ImportPath": "github.com/spf13/cobra",
