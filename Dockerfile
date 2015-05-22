@@ -9,5 +9,5 @@ RUN go get github.com/tools/godep \
 
 VOLUME ["/var/lib/try5", "/etc/try5d/certs"]
 
-EXPOSE 8000
+EXPOSE 9000
 ENTRYPOINT /go/bin/try5d
