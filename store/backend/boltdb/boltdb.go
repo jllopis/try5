@@ -147,7 +147,7 @@ func (s *BoltStore) SaveAccount(acc *account.Account) (*account.Account, error) 
 		}
 		if savedAcc == nil {
 			s.logger.Info("SaveAccount", "cant retrieve account from db", "uid", *acc.UID)
-			return nil, errors.New("uid mismatch")
+			return nil, errors.New("error getting account from db")
 		}
 		// copy immutable data, that we are not allowed to modify
 		acc.Created = savedAcc.Created
