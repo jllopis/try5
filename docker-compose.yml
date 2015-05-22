@@ -15,8 +15,6 @@
 
 try5:
         build: .
-        #dockerfile: Dockerfile-devel
-        #image: docker.acb.info:5000/try5api:v0.0.1
         volumes:
                 - ${PWD}/cmd/try5d/certs:/etc/try5/certs
         environment:
