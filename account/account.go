@@ -106,6 +106,10 @@ func (account *Account) Delete() error {
 
 func (a *Account) ValidateFields() error {
 	switch {
+	case a.Name == nil:
+		return ErrInvalidName
+	case a.Email == nil:
+		return ErrInvalidEmail
 	case len(*a.Name) == 0 || len(*a.Name) > 256:
 		return ErrInvalidName
 	case len(*a.Email) == 0 || len(*a.Email) > 256 || RegexpEmail.MatchString(*a.Email) == false:
