@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,20 +27,14 @@ func (ctx *ApiContext) GetAllAccounts(w http.ResponseWriter, r *http.Request) {
 func (ctx *ApiContext) GetAccountByID(w http.ResponseWriter, r *http.Request) {
 	var res *account.Account
 	var err error
-	var id string
-	if id = aloja.Params(r).ByName("uid"); id == "" {
+	var uid string
+	if uid = aloja.Params(r).ByName("uid"); uid == "" {
 		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
 		return
 	}
-	if res, err = ctx.DB.LoadAccount(id); err != nil {
-		if err == sql.ErrNoRows {
-			errMsg := fmt.Sprintf("El item con id=%v no se ha encontrado", id)
-			ctx.Render.JSON(w, http.StatusNotFound, errMsg)
-			//ctx.Render.JSON(w, http.StatusNotFound, &logMessage{Status: "error", Action: "get", Info: err.Detail, Table: err.Table, Code: string(err.Code), ID: id})
-			logger.Error("func GetAccountByID", "error", "account no encontrado", "id", id)
-			return
-		}
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
+	if res, err = ctx.DB.LoadAccount(uid); err != nil {
+		logger.Info("GetAccountByID", "error", "account not found", "uid", uid)
+		ctx.Render.JSON(w, http.StatusNotFound, &logMessage{Status: "error", Action: "get", Info: err.Error(), Table: "accounts", UID: uid})
 		return
 	}
 	ctx.Render.JSON(w, http.StatusOK, res)
@@ -69,7 +62,7 @@ func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
 		logger.Error("func NewAccount", "error", err)
 		return
 	} else {
-		ctx.Render.JSON(w, http.StatusOK, outdata)
+		ctx.Render.JSON(w, http.StatusCreated, outdata)
 	}
 }
 
@@ -103,8 +96,11 @@ func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		newdata.UID = &uid
 	} else {
 		if *newdata.UID != uid {
-			ctx.Render.JSON(w, http.StatusInternalServerError, fmt.Sprintf("los identificadores de registro no coindiden: body: %v - path: %v", *newdata.UID, uid))
-			logger.Error("func UpdateAccount", "error", err.Error())
+			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error",
+				Action: "update",
+				Info:   fmt.Sprintf("provided uid's does not match: body: %v - path: %v", *newdata.UID, uid),
+				Table:  "accounts"})
+			logger.Error("func UpdateAccount", "error", "uid's does not match", "body", *newdata.UID, "path", uid)
 			return
 		}
 	}
