@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -23,6 +24,7 @@ type Config struct {
 	SslCert      string `getconf:"etcd app/try5/conf/sslcert" env TRY5_SSLCERT, flag sslcert`
 	SslKey       string `getconf:"etcd app/try5/conf/sslkey" env TRY5_SSLKEY, flag sslkey`
 	Port         string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
+	Origins      string `getconf:"etcd app/try5/conf/origins, env TRY5_ORIGINS, flag origins"`
 	Verbose      bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
 	StorePath    string `getconf:"etcd app/try5/conf/storepath, env TRY5_STORE_PATH, flag storepath"`
 	StoreTimeout int    `getconf:"etcd app/try5/conf/storetimeout, env TRY5_STORE_TIMEOUT, flag storetimeout"`
@@ -104,7 +106,13 @@ func main() {
 
 	server := aloja.New().Port(port).SSLConf(config.GetString("SslCert"), config.GetString("SslKey"))
 	// Use CORS Handler in every request and log every request
+	origins := strings.Split(config.GetString("Origins"), ",")
+	if len(origins) == 0 || origins[0] == "" {
+		origins = []string{"*"}
+	}
+	logger.Info("main (cors)", "allowed origins", origins)
 	cors := mw.CorsHandler(mw.CorsOptions{
+		AllowedOrigins:   origins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"},
 		AllowCredentials: true,
 		Debug:            true,
