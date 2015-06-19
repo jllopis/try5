@@ -21,8 +21,8 @@ import (
 
 // Config proporciona la configuración del servicio para ser utilizado por getconf
 type Config struct {
-	SslCert      string `getconf:"etcd app/try5/conf/sslcert" env TRY5_SSLCERT, flag sslcert`
-	SslKey       string `getconf:"etcd app/try5/conf/sslkey" env TRY5_SSLKEY, flag sslkey`
+	SslCert      string `getconf:"etcd app/try5/conf/sslcert, env TRY5_SSLCERT, flag sslcert"`
+	SslKey       string `getconf:"etcd app/try5/conf/sslkey, env TRY5_SSLKEY, flag sslkey"`
 	Port         string `getconf:"etcd app/try5/conf/port, env TRY5_PORT, flag port"`
 	Origins      string `getconf:"etcd app/try5/conf/origins, env TRY5_ORIGINS, flag origins"`
 	Verbose      bool   `getconf:"etcd app/try5/conf/verbose, env TRY5_VERBOSE, flag verbose"`
