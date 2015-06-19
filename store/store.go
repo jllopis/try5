@@ -1,6 +1,10 @@
 package store
 
-import "github.com/jllopis/try5/account"
+import (
+	"errors"
+
+	"github.com/jllopis/try5/account"
+)
 
 type Storer interface {
 	Status() (int, string)
@@ -19,4 +23,9 @@ const (
 
 var (
 	StatusStr = []string{"Disconnected", "Connected"}
+)
+
+var (
+	ErrEmailNotFound = errors.New("email not found")
+	ErrDupEmail      = errors.New("email exists in db")
 )

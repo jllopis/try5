@@ -120,7 +120,7 @@ func (s *BoltStore) GetAccountByEmail(email string) (*account.Account, error) {
 	if found != nil {
 		return found, nil
 	}
-	return nil, errors.New("email not found")
+	return nil, store.ErrEmailNotFound
 }
 
 func (s *BoltStore) SaveAccount(acc *account.Account) (*account.Account, error) {
@@ -129,6 +129,10 @@ func (s *BoltStore) SaveAccount(acc *account.Account) (*account.Account, error) 
 	// Check if we have an id. If we do, it "could" be an update (check if account exist first)
 	// If don't, its a new account
 	if acc.UID == nil {
+		if _, err := s.GetAccountByEmail(*acc.Email); err == nil {
+			// must get an ErrEmailNotFound err
+			return nil, store.ErrDupEmail
+		}
 		u := uuid.New()
 		acc.UID = &u
 		acc.Created = &now

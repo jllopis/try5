@@ -7,6 +7,7 @@ import (
 
 	"github.com/jllopis/aloja"
 	"github.com/jllopis/try5/account"
+	"github.com/jllopis/try5/store"
 	"github.com/lib/pq"
 )
 
@@ -54,9 +55,12 @@ func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if outdata, err := ctx.DB.SaveAccount(&data); err != nil {
-		if _, ok := err.(*pq.Error); ok {
+		switch err {
+		case store.ErrDupEmail:
+			ctx.Render.JSON(w, http.StatusConflict, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "209"})
+		case err.(*pq.Error):
 			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.(*pq.Error).Detail, Table: err.(*pq.Error).Table, Code: string(err.(*pq.Error).Code)})
-		} else {
+		default:
 			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "500"})
 		}
 		logger.Error("func NewAccount", "error", err)

@@ -32,6 +32,13 @@ func (s *MemStore) LoadAccount(uuid string) (*account.Account, error) {
 }
 
 func (s *MemStore) SaveAccount(account *account.Account) (*account.Account, error) {
+	if account.Email != nil {
+		for _, v := range s.accounts {
+			if *account.Email == *v.Email {
+				return nil, store.ErrDupEmail
+			}
+		}
+	}
 	if account.UID == nil {
 		*account.UID = uuid.New()
 	}
