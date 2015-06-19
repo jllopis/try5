@@ -17,13 +17,14 @@ import (
 
 const (
 	VERSION = "v0.0.1"
-	try5uri = "https://b2d:9000"
+	//try5uri = "https://b2d:9000"
 	//try5uri = "https://srv18.acb.info:9000"
 )
 
 var (
 	logger   log.Logger
 	pAccTmpl *template.Template
+	Try5URI  string
 )
 
 func init() {
@@ -64,7 +65,7 @@ func main() {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
 			client := &http.Client{Transport: tr}
-			resp, err := client.Get(try5uri + "/api/v1/accounts")
+			resp, err := client.Get(Try5URI + "/api/v1/accounts")
 			if err != nil {
 				logger.Warn("accounts list", "error", err.Error())
 				return
@@ -136,7 +137,7 @@ func main() {
 				go func(a account.Account) {
 					defer wg.Done()
 					comms <- fmt.Sprintf("\033[33m[INF]\033[0m Creando cuenta: %s (%s)", *a.Name, *a.Email)
-					resp, err := httpClient().Post(try5uri+"/api/v1/accounts", "application/json; charset=utf-8", bytes.NewBuffer(x))
+					resp, err := httpClient().Post(Try5URI+"/api/v1/accounts", "application/json; charset=utf-8", bytes.NewBuffer(x))
 					if err != nil {
 						//logger.Warn("accounts new", "error", err.Error())
 						comms <- fmt.Sprintf("\033[31m[ERR]\033[0m accounts new: %v", err)
@@ -172,6 +173,7 @@ func main() {
 	var rootCmd = &cobra.Command{Use: "try5cli"}
 	rootCmd.AddCommand(cmdVersion, cmdAccount)
 	cmdAccount.AddCommand(cmdListAccounts, cmdNewAccount)
+	rootCmd.PersistentFlags().StringVarP(&Try5URI, "server", "s", "https://b2d:9000", "try5 server URI")
 	rootCmd.Execute()
 }
 
