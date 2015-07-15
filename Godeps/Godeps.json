@@ -36,6 +36,11 @@
 			"Rev": "4734e7aca379f0d7fcdf04fbb2101696a4b45ce8"
 		},
 		{
+			"ImportPath": "github.com/dgrijalva/jwt-go",
+			"Comment": "v2.2.0-28-g2e53eb6",
+			"Rev": "2e53eb673c4450614e3bca6f345197f9527dce71"
+		},
+		{
 			"ImportPath": "github.com/dimfeld/httppath",
 			"Rev": "c8e499c3ef3c3e272ed8bdcc1ccf39f73c88debc"
 		},
@@ -57,7 +62,7 @@
 		},
 		{
 			"ImportPath": "github.com/jllopis/aloja",
-			"Rev": "60751e97377d9e056f82d5730107a28b9f83af21"
+			"Rev": "bb8002410e70f2ffed4f6986fe3905f527d12aa0"
 		},
 		{
 			"ImportPath": "github.com/jmoiron/sqlx",
@@ -125,6 +130,10 @@
 		{
 			"ImportPath": "golang.org/x/crypto/blowfish",
 			"Rev": "b7d6bf2c61544745a02f83dec90393985fc3a065"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "669b27b881d6d006def7db14d534acdc5aba342b"
 		}
 	]
 }
