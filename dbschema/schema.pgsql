@@ -54,6 +54,48 @@ ALTER TABLE accounts OWNER TO try5adm;
 CREATE INDEX account_idx ON accounts USING btree (id);
 CREATE INDEX account_email_idx ON accounts USING btree (email);
 
+--------------------------------------------------
+-- Table structure for "keypairs"
+--------------------------------------------------
+
+CREATE TABLE keys (
+  id             SERIAL,
+  kid            VARCHAR(36),)
+  account_uid    VARCHAR(36),
+  priv_key       CHARACTER VARYING,
+  pub_key        CHARACTER VARYING,
+  active         BOOLEAN NOT NULL DEFAULT TRUE,
+  created        TIMESTAMP NOT NULL DEFAULT now(),
+  updated        TIMESTAMP DEFAULT NULL,
+  deleted        TIMESTAMP DEFAULT NULL,
+
+  CONSTRAINT keys_pkey PRIMARY KEY (id)
+)
+WITH (OIDS=FALSE);
+ALTER TABLE keys OWNER TO try5adm;
+CREATE INDEX keys_idx ON keys USING btree (id, public_key, active);
+
+--------------------------------------------------
+-- Table structure for "tokens"
+--------------------------------------------------
+
+CREATE TABLE tokens (
+  id             SERIAL,
+  uid            VARCHAR(36),
+  signing_method CHARACTER VARYING,
+  expires        TIMESTAMP DEFAULT NULL,
+  active         BOOLEAN NOT NULL DEFAULT TRUE,
+  created        TIMESTAMP NOT NULL DEFAULT now(),
+  updated        TIMESTAMP DEFAULT NULL,
+  deleted        TIMESTAMP DEFAULT NULL,
+
+  CONSTRAINT tokens_pkey PRIMARY KEY (id)
+)
+WITH (OIDS=FALSE);
+ALTER TABLE tokens OWNER TO try5adm;
+CREATE INDEX tokens_idx ON tokens USING btree (id, uid, active);
+
+
 CREATE TABLE rbac_role (
     id SERIAL NOT NULL PRIMARY KEY,
     slug VARCHAR(256) UNIQUE NOT NULL,
