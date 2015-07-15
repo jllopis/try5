@@ -135,9 +135,17 @@ func setupAPIRoutes(apisrv *aloja.Subrouter) {
 	apisrv.Post("/accounts", http.HandlerFunc(apiCtx.NewAccount))
 	apisrv.Put("/accounts/:uid", http.HandlerFunc(apiCtx.UpdateAccount))
 	apisrv.Delete("/accounts/:uid", http.HandlerFunc(apiCtx.DeleteAccount))
+	// Keys
+	apisrv.Get("/accounts/:uid/keys", http.HandlerFunc(apiCtx.GetAccountKeys))
+	// account jwt
+	apisrv.Get("/accounts/:uid/tokens", http.HandlerFunc(apiCtx.GetAccountTokens))
 
 	// authentication
 	apisrv.Post("/authenticate", http.HandlerFunc(apiCtx.Authenticate))
+
+	// JWT
+	apisrv.Post("/jwt/token/:uid", http.HandlerFunc(apiCtx.NewJWTToken))
+	apisrv.Post("/jwt/token/validate", http.HandlerFunc(apiCtx.ValidateToken))
 }
 
 // setupSignals configura la captura de señales de sistema y actúa basándose en ellas
