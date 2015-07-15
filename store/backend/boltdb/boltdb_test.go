@@ -1,51 +1,38 @@
 package bolt
 
 import (
-	"fmt"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/jllopis/try5/account"
+	"github.com/jllopis/try5/log"
 )
 
-func TestAccount(t *testing.T) {
-	opts := &BoltStoreOptions{
-		Dbpath:  "/tmp/test.db",
-		Timeout: 5 * time.Second,
-	}
+var (
+	storeConfig = make(map[string]interface{})
+	testStore   *Store
+)
 
-	account, err := account.NewAccount("testaccount@dom.local", "Test account", "SuperDifficultPass")
-	if err != nil {
-		t.Fatal("Error creating account: ", err)
-	}
+func TestMain(m *testing.M) {
+	setup()
+	res := m.Run()
+	cleanup()
+	os.Exit(res)
+}
 
-	m := NewBoltStore(opts)
-	if m == nil {
-		t.Fatal("Error creating boltdb store")
-	}
+func setup() {
+	log.SetLevel(2) // Info level
+	storeConfig["path"] = "./test.db"
+	storeConfig["timeout"] = 5 * time.Second
 
-	savedAccount, err := m.SaveAccount(account)
-	if err != nil {
-		t.Fatal("Error saving account to boltdb store:", err)
+	testStore = NewStore()
+	if err := testStore.Dial(storeConfig); err != nil {
+		log.LogF("error creating store", "error", err.Error())
 	}
-	fmt.Printf("Saved account: %#v\n", savedAccount)
+}
 
-	u, err := m.LoadAccount(*savedAccount.UID)
-	if err != nil {
-		t.Fatal("Error from boltdb store: %v", err)
+func cleanup() {
+	if _, err := os.Stat(storeConfig["path"].(string)); err == nil {
+		os.Remove(storeConfig["path"].(string))
 	}
-	if u == nil {
-		t.Fatal("Error getting account from boltdb store")
-	}
-	fmt.Printf("Got from store: %#v\n", u)
-
-	u2, err := m.LoadAccount("")
-	if err != nil {
-		t.Fatal("Error from boltdb store: %v", err)
-	}
-	if u2 != nil {
-		t.Fatal("Got inexistent account from boltdb store")
-		fmt.Printf("Got from store: %#v\n", u2)
-	}
-
 }
