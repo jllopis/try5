@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"time"
 
 	"code.google.com/p/go-uuid/uuid"
@@ -14,12 +13,12 @@ import (
 	"github.com/jllopis/try5/tryerr"
 )
 
+// LoadAllAccounts query the database and returns all the accounts found.
+// If some error could happen, it is returned
 func (s *Store) LoadAllAccounts() ([]*account.Account, error) {
 	var accounts []*account.Account
 	err := s.C.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("accounts"))
-		bs := bucket.Stats()
-		fmt.Printf("\nBoltDB STATS:\n%#v\n", bs)
 		bucket.ForEach(func(k, v []byte) error {
 			var a *account.Account
 			dec := gob.NewDecoder(bytes.NewBuffer(v))
@@ -37,12 +36,15 @@ func (s *Store) LoadAllAccounts() ([]*account.Account, error) {
 	return accounts, nil
 }
 
+// LoadAccount will load the requested account from the database. The account is
+// retrieved if its uid match with the param uuid.
+// If not found or an error occurs the error is returned
 func (s *Store) LoadAccount(uuid string) (*account.Account, error) {
 	var a *account.Account
 	err := s.C.View(func(tx *bolt.Tx) error {
 		data := tx.Bucket([]byte("accounts")).Get([]byte(uuid))
 		if data == nil {
-			return errors.New("account not found")
+			return tryerr.ErrAccountNotFound
 		}
 		dec := gob.NewDecoder(bytes.NewBuffer(data))
 		return dec.Decode(&a)
