@@ -30,7 +30,7 @@ var DefaultLogger = logrus.New()
 
 // init initialize the DefaultLogger with some good defaults
 func init() {
-	DefaultLogger.Level = logrus.DebugLevel
+	DefaultLogger.Level = logrus.InfoLevel
 	DefaultLogger.Out = os.Stderr
 	DefaultLogger.Formatter = &logrus.JSONFormatter{}
 	//DefaultLogger.Formatter = &logrus.TextFormatter{DisableColors: true}
