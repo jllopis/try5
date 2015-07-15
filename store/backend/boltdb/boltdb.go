@@ -1,210 +1,89 @@
+/*
+Package bolt implements the store.Storer interface and allows the use of a BoltDB
+database as persistent storage for try5.
+*/
 package bolt
 
 import (
-	"bytes"
-	"encoding/gob"
-	"errors"
 	"fmt"
 	"time"
 
-	"code.google.com/p/go-uuid/uuid"
+	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"github.com/jllopis/try5/account"
-	"github.com/jllopis/try5/store"
-	"github.com/mgutz/logxi/v1"
+	"github.com/jllopis/try5/log"
+	"github.com/jllopis/try5/store/manager"
 )
 
-type BoltStore struct {
+// Store holds the resources used to acces a boltdb database.
+type Store struct {
 	C      *bolt.DB
 	status int
-	BoltStoreOptions
-	logger log.Logger
+	StoreOptions
 }
 
-type BoltStoreOptions struct {
+// StoreOptions are the options needed to setup a boltdb database
+type StoreOptions struct {
 	Dbpath  string
 	Timeout time.Duration
 }
 
-func NewBoltStore(options *BoltStoreOptions) *BoltStore {
-	b := &BoltStore{logger: log.New("bolt")}
-	b.BoltStoreOptions = *options
-	db, err := bolt.Open(options.Dbpath, 0600, &bolt.Options{Timeout: options.Timeout * time.Second})
-	if err != nil {
-		b.logger.Fatal("NewBoltStore", "error", err.Error())
+var (
+	tables = [][]byte{[]byte(`accounts`), []byte(`keys`), []byte(`tokens`), []byte(`sessions`), []byte(`certs`)}
+)
+
+func init() {
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetOutput(os.Stderr)
+	manager.Register("boltdb", &Store{})
+}
+
+// NewStore returns an empyt Store object
+func NewStore() *Store {
+	return &Store{}
+}
+
+// Dial creates the database and the needed buckets. It also sets the Store.status
+func (s *Store) Dial(options map[string]interface{}) error {
+	log.LogD("Dial")
+	if options == nil {
+		log.LogE("dial options can not be nil", "p", "boltdb", "f", "Dial()")
+		return fmt.Errorf("dial options can not be nil")
 	}
-	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("accounts"))
+	log.LogI("Dialing Store", "path", options["path"])
+	s.StoreOptions = StoreOptions{Dbpath: options["path"].(string), Timeout: options["timeout"].(time.Duration)}
+	db, err := bolt.Open(s.Dbpath, 0600, &bolt.Options{Timeout: s.Timeout * time.Second})
+	if err != nil {
 		return err
-	})
-	if err != nil {
-		return nil
 	}
-	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("sessions"))
-		return err
-	})
-	if err != nil {
-		return nil
-	}
-	b.C = db
-	b.status = store.CONNECTED
-	return b
-}
-
-func (s *BoltStore) Status() (int, string) {
-	return s.status, store.StatusStr[s.status]
-}
-
-func (s *BoltStore) LoadAllAccounts() ([]*account.Account, error) {
-	var accounts []*account.Account
-	err := s.C.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("accounts"))
-		bs := bucket.Stats()
-		fmt.Printf("\nBoltDB STATS:\n%#v\n", bs)
-		bucket.ForEach(func(k, v []byte) error {
-			var a *account.Account
-			dec := gob.NewDecoder(bytes.NewBuffer(v))
-			err := dec.Decode(&a)
-			if err == nil && a != nil {
-				accounts = append(accounts, a)
-			}
-			return nil
+	for _, v := range tables {
+		err = db.Update(func(tx *bolt.Tx) error {
+			_, err := tx.CreateBucketIfNotExists(v)
+			return err
 		})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return accounts, nil
-}
-
-func (s *BoltStore) LoadAccount(uuid string) (*account.Account, error) {
-	var a *account.Account
-	err := s.C.View(func(tx *bolt.Tx) error {
-		data := tx.Bucket([]byte("accounts")).Get([]byte(uuid))
-		if data == nil {
-			return errors.New("account not found")
-		}
-		dec := gob.NewDecoder(bytes.NewBuffer(data))
-		return dec.Decode(&a)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return a, nil
-}
-
-func (s *BoltStore) GetAccountByEmail(email string) (*account.Account, error) {
-	var found *account.Account
-	err := s.C.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("accounts"))
-		bucket.ForEach(func(k, v []byte) error {
-			var a *account.Account
-			dec := gob.NewDecoder(bytes.NewBuffer(v))
-			err := dec.Decode(&a)
-			if err == nil && a != nil {
-				if email == *a.Email {
-					found = a
-					return nil
-				}
-			}
-			return nil
-		})
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if found != nil {
-		return found, nil
-	}
-	return nil, store.ErrEmailNotFound
-}
-
-func (s *BoltStore) SaveAccount(acc *account.Account) (*account.Account, error) {
-	now := time.Now().UTC()
-	acc.Updated = &now
-	// Check if we have an id. If we do, it "could" be an update (check if account exist first)
-	// If don't, its a new account
-	if acc.UID == nil {
-		if _, err := s.GetAccountByEmail(*acc.Email); err == nil {
-			// must get an ErrEmailNotFound err
-			return nil, store.ErrDupEmail
-		}
-		u := uuid.New()
-		acc.UID = &u
-		acc.Created = &now
-		if ok := acc.Password; ok == nil {
-			return nil, errors.New("nil password")
-		}
-		acc.UpdatePassword(*acc.Password)
-		if acc.Active == nil {
-			t := true
-			acc.Active = &t
-		}
-	} else {
-		savedAcc, err := s.LoadAccount(*acc.UID)
 		if err != nil {
-			return nil, err
-		}
-		if savedAcc == nil {
-			s.logger.Info("SaveAccount", "cant retrieve account from db", "uid", *acc.UID)
-			return nil, errors.New("error getting account from db")
-		}
-		// copy immutable data, that we are not allowed to modify
-		acc.Created = savedAcc.Created
-		if acc.Password != nil {
-			if savedAcc.Password != nil {
-				s.logger.Info("SaveAccount", "change passord required", *acc.UID, "old", *savedAcc.Password, "new", *acc.Password)
-				if *acc.Password != *savedAcc.Password {
-					acc.UpdatePassword(*acc.Password)
-					s.logger.Info("SaveAccount", "passord changed", *acc.UID, "old", *savedAcc.Password, "new", *acc.Password)
-				}
-			}
-		} else {
-			if savedAcc.Password != nil {
-				acc.Password = savedAcc.Password
-			}
-		}
-		if acc.Active == nil {
-			if savedAcc.Active != nil {
-				acc.Active = savedAcc.Active
-			} else {
-				// active is true by default
-				t := true
-				acc.Active = &t
-			}
+			return nil
 		}
 	}
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(acc)
-	if err != nil {
-		return nil, err
-	}
-	err = s.C.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket([]byte("accounts")).Put([]byte(*acc.UID), buf.Bytes())
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return acc, nil
+	s.C = db
+	s.status = manager.CONNECTED
+	log.LogI("Dialing done", "status", "CONNECTED", "p", "boltdb", "f", "Dial()")
+	return nil
 }
 
-func (s *BoltStore) DeleteAccount(uuid string) (int, error) {
-	err := s.C.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket([]byte("accounts")).Delete([]byte(uuid))
-	})
-	if err != nil {
-		return 0, err
-	}
-	return 1, nil
+// Status returns the current status of the boltdb database. It returns two variables.
+// The first one is an integer indicating the state and the second one is the
+// string representation (printable) of the status.
+func (s *Store) Status() (int, string) {
+	return s.status, manager.StatusStr[s.status]
 }
 
-func (s *BoltStore) Close() error {
-	s.status = store.DISCONNECTED
+// Close effectively closes the database. It must be called when quitting to
+// prevent data loss
+// TODO(jllopis): call Close() automatically on exit if not called explicitly (context.WithCancel?)
+func (s *Store) Close() error {
+	s.status = manager.DISCONNECTED
+	log.LogI("Store connection closed", "status", "DISCONNECTED", "p", "boltdb", "f", "Close()")
 	return s.C.Close()
 }
