@@ -32,7 +32,6 @@ Session.vim
 # Folders
 _obj
 _test
-log/
 
 # Architecture specific extensions/prefixes
 *.[568vq]
