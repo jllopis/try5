@@ -5,6 +5,9 @@
 .*_lck
 *.pem
 
+# ignore generated ctags file
+tags
+
 uploads/
 .secret
 ansible/id_rsa*
