@@ -14,8 +14,8 @@ import (
 	"github.com/jllopis/aloja"
 	"github.com/jllopis/aloja/mw"
 	"github.com/jllopis/try5/api"
+	logger "github.com/jllopis/try5/log"
 	"github.com/jllopis/try5/store/backend/boltdb"
-	"github.com/mgutz/logxi/v1"
 	"github.com/unrolled/render"
 )
 
@@ -45,7 +45,6 @@ var (
 	config   *getconf.GetConf
 	apiCtx   *api.ApiContext
 	verbose  bool
-	logger   log.Logger
 )
 
 func init() {
@@ -53,10 +52,9 @@ func init() {
 	//config = getconf.New(&Config{}, "TRY5", true, etcdURI)
 	config = getconf.New(&Config{}, "TRY5", false, "")
 	config.Parse()
-	logger = log.New("try5api")
 	//	dbPort := 5432
 	//	if p, err := config.GetInt("StorePort"); err == nil {
-	//		logger.Info("Store", "port", p)
+	//		logger.LogI("Store", "port", p)
 	//		dbPort = int(p)
 	//	}
 	//	rs, err := psql.OpenPgSQLStore(&psql.PsqlStoreOptions{
@@ -68,7 +66,7 @@ func init() {
 	//	})
 	timeout := 5 * time.Second
 	if to, err := config.GetInt("StoreTimeout"); err == nil {
-		logger.Info("Store", "connect timeout (s)", to)
+		logger.LogI("Store", "connect timeout (s)", to)
 		timeout = time.Duration(to) * time.Second
 	}
 	rs := bolt.NewBoltStore(&bolt.BoltStoreOptions{
@@ -76,9 +74,9 @@ func init() {
 		Timeout: timeout,
 	})
 	if rs == nil {
-		logger.Fatal("Cannot connect to file store", "db file path", rs.Dbpath)
+		logger.LogF("Cannot connect to file store", "db file path", rs.Dbpath)
 	} else {
-		logger.Info("Connected to store backend", "driver", "boltdb", "db file path", rs.Dbpath)
+		logger.LogI("Connected to store backend", "driver", "boltdb", "db file path", rs.Dbpath)
 	}
 	r := render.New(render.Options{
 		Charset:    "UTF-8",
@@ -96,13 +94,13 @@ func main() {
 	setupSignals()
 	port := config.GetString("Port")
 	if port == "" {
-		logger.Warn("can't get Port value from config", "USING:", 8000)
+		logger.LogW("can't get Port value from config", "USING:", 8000)
 		port = "8000"
 	}
-	logger.Info("Try5 API Server", "Version", Version, "Revision", Revision, "Build", BuildDate)
-	logger.Info("GetConf", "Version", getconf.Version())
-	logger.Info("Go", "Version", runtime.Version())
-	logger.Info("API Server", "Status", "started", "port", port)
+	logger.LogI("Try5 API Server", "Version", Version, "Revision", Revision, "Build", BuildDate)
+	logger.LogI("GetConf", "Version", getconf.Version())
+	logger.LogI("Go", "Version", runtime.Version())
+	logger.LogI("API Server", "Status", "started", "port", port)
 
 	server := aloja.New().Port(port).SSLConf(config.GetString("SslCert"), config.GetString("SslKey"))
 	// Use CORS Handler in every request and log every request
@@ -110,7 +108,7 @@ func main() {
 	if len(origins) == 0 || origins[0] == "" {
 		origins = []string{"*"}
 	}
-	logger.Info("main (cors)", "allowed origins", origins)
+	logger.LogI("main (cors)", "allowed origins", origins)
 	cors := mw.CorsHandler(mw.CorsOptions{
 		AllowedOrigins:   origins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"},
@@ -154,7 +152,7 @@ func setupSignals() {
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		for sig := range sc {
-			logger.Info("signal.notify", "captured signal", sig, "stopping", true)
+			logger.LogI("signal.notify", "captured signal", sig, "stopping", true)
 			os.Exit(1)
 		}
 	}()
