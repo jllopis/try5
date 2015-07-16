@@ -74,6 +74,17 @@ func (m *Manager) DeleteAccount(uid string) error {
 	return nil
 }
 
+// GetAccountByEmail will get the account from the store with the given email.
+// If account could not be retrieved an error is returned.
+func (m *Manager) GetAccountByEmail(email string) (*account.Account, error) {
+	a, err := m.provider.GetAccountByEmail(email)
+	if err != nil {
+		log.LogD("error getting account", "pkg", "manager", "func", "GetAccountByEmail()", "email", email, "error", err.Error())
+		return nil, err
+	}
+	return a, nil
+}
+
 // ExistAccount check the store for account presence. Returns a bool true if account
 // is found and false otherwise.
 // The account can be checked by uid, email or name. Search by name does not grant
@@ -81,8 +92,4 @@ func (m *Manager) DeleteAccount(uid string) error {
 // If we found an error querying the provider, an error is returned.
 func (m *Manager) ExistAccount(q string) (bool, error) {
 	return false, tryerr.ErrNotImplemented
-}
-
-func (m *Manager) GetAccountByEmail(email string) (*account.Account, error) {
-	return nil, tryerr.ErrNotImplemented
 }
