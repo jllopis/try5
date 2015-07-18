@@ -153,7 +153,24 @@ func (s *Store) SaveAccount(acc *account.Account) error {
 	return nil
 }
 
+// ExistAccount return true if the account was found in the store and false otherwise.
+func (s *Store) ExistAccount(uuid string) bool {
+	found := false
+	s.C.View(func(tx *bolt.Tx) error {
+		data := tx.Bucket([]byte("accounts")).Get([]byte(uuid))
+		if data == nil {
+			return nil
+		}
+		found = true
+		return nil
+	})
+	return found
+}
+
 func (s *Store) DeleteAccount(uuid string) error {
+	if !s.ExistAccount(uuid) {
+		return tryerr.ErrAccountNotFound
+	}
 	err := s.C.Update(func(tx *bolt.Tx) error {
 		return tx.Bucket([]byte("accounts")).Delete([]byte(uuid))
 	})
