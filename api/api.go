@@ -1,17 +1,10 @@
 package api
 
 import (
-	"github.com/gorilla/securecookie"
-	"github.com/jllopis/try5/store"
-	"github.com/mgutz/logxi/v1"
-	"github.com/unrolled/render"
+	"net/http"
+	"strconv"
+	"time"
 )
-
-type ApiContext struct {
-	DB            store.Storer
-	Render        *render.Render
-	CookieHandler *securecookie.SecureCookie
-}
 
 type logMessage struct {
 	Status string `json:"status"`
@@ -22,8 +15,8 @@ type logMessage struct {
 	UID    string `json:"id,omitempty"`
 }
 
-var logger log.Logger
-
-func init() {
-	logger = log.New("try5")
+// add default service to give server time
+func Time(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(strconv.FormatInt(time.Now().UTC().UnixNano(), 10)))
 }

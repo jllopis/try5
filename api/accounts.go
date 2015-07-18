@@ -5,186 +5,181 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jllopis/aloja"
 	"github.com/jllopis/try5/account"
 	"github.com/jllopis/try5/keys"
-	"github.com/jllopis/try5/store"
+	logger "github.com/jllopis/try5/log"
+	"github.com/jllopis/try5/store/manager"
+	"github.com/jllopis/try5/tryerr"
+	"github.com/labstack/echo"
 	"github.com/lib/pq"
 )
 
 // GetAllAccounts devuelve una lista con todos los accounts de la base de datos
 //   curl -ks https://b2d:8000/v1/accounts | jp -
-func (ctx *ApiContext) GetAllAccounts(w http.ResponseWriter, r *http.Request) {
-	var res []*account.Account
-	var err error
-	if res, err = ctx.DB.LoadAllAccounts(); err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-		return
+func GetAllAccounts(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var res []*account.Account
+		var err error
+		if res, err = m.LoadAllAccounts(); err != nil {
+			return ctx.JSON(http.StatusInternalServerError, err.Error())
+		}
+		return ctx.JSON(http.StatusOK, res)
 	}
-	ctx.Render.JSON(w, http.StatusOK, res)
 }
 
 // GetAccountByID devuelve el account de la base de datos que coincide con el ID suministrado
 //   curl -ks https://b2d:8000/v1/accounts/342947fd-6c4b-4d2b-85ab-da14b37d047a | jp -
-func (ctx *ApiContext) GetAccountByID(w http.ResponseWriter, r *http.Request) {
-	var res *account.Account
-	var err error
-	var uid string
-	if uid = aloja.Params(r).ByName("uid"); uid == "" {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
-		return
+func GetAccountByID(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var res *account.Account
+		var err error
+		var uid string
+		if uid = ctx.Param("uid"); uid == "" {
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
+		}
+		if res, err = m.LoadAccount(uid); err != nil {
+			logger.LogE("GetAccountByID", "error", "account not found", "uid", uid)
+			return ctx.JSON(http.StatusNotFound, &logMessage{Status: "error", Action: "get", Info: err.Error(), Table: "accounts", UID: uid})
+		}
+		return ctx.JSON(http.StatusOK, res)
 	}
-	if res, err = ctx.DB.LoadAccount(uid); err != nil {
-		logger.Info("GetAccountByID", "error", "account not found", "uid", uid)
-		ctx.Render.JSON(w, http.StatusNotFound, &logMessage{Status: "error", Action: "get", Info: err.Error(), Table: "accounts", UID: uid})
-		return
-	}
-	ctx.Render.JSON(w, http.StatusOK, res)
 }
 
 // NewAccount crea un nuevo account.
 //   curl -k https://b2d:8000/v1/accounts -X POST -d '{"email":"tu2@test.com","name":"test user 2","password":"1234","active":true}'
-func (ctx *ApiContext) NewAccount(w http.ResponseWriter, r *http.Request) {
-	var data account.Account
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
-		return
-	}
-	if err = data.ValidateFields(); err != nil {
-		ctx.Render.JSON(w, http.StatusBadRequest, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
-		return
-	}
-	if outdata, err := ctx.DB.SaveAccount(&data); err != nil {
-		switch err {
-		case store.ErrDupEmail:
-			ctx.Render.JSON(w, http.StatusConflict, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "209"})
-		case err.(*pq.Error):
-			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.(*pq.Error).Detail, Table: err.(*pq.Error).Table, Code: string(err.(*pq.Error).Code)})
-		default:
-			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "500"})
+func NewAccount(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var data account.Account
+		err := json.NewDecoder(ctx.Request().Body).Decode(&data)
+		if err != nil {
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
 		}
-		logger.Error("func NewAccount", "error", err)
-		return
-	} else {
-		// Generate and assign a key pair
-		if creat := r.FormValue("wkey"); creat == "" {
-			k := keys.New(*outdata.UID)
-			if _, err := ctx.DB.SaveKey(k); err != nil {
-				ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "keys", Code: "500"})
-				logger.Error("func NewAccount/keys.New", "error", err)
-				return
+		if err = data.ValidateFields(); err != nil {
+			return ctx.JSON(http.StatusBadRequest, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts"})
+		}
+		if err := m.SaveAccount(&data); err != nil {
+			logger.LogE("func NewAccount", "error", err)
+			switch err {
+			case tryerr.ErrDupEmail:
+				return ctx.JSON(http.StatusConflict, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "209"})
+			case err.(*pq.Error):
+				return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.(*pq.Error).Detail, Table: err.(*pq.Error).Table, Code: string(err.(*pq.Error).Code)})
+			default:
+				return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "accounts", Code: "500"})
 			}
+		} else {
+			logger.LogD("creating keypair for account", "pkg", "api", "func", "NewAccount()", "uid", *data.UID)
+			// Generate and assign a key pair
+			if creat := ctx.Form("nokey"); creat == "" {
+				k := keys.New(*data.UID)
+				if err := m.SaveKey(k); err != nil {
+					logger.LogE("func NewAccount/keys.New", "error", err)
+					return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "create", Info: err.Error(), Table: "keys", Code: "500"})
+				}
+				logger.LogD("keys created", "pkg", "api", "func", "NewAccount()", "kid", *k.KID)
+			}
+			// and return the created account
+			return ctx.JSON(http.StatusCreated, data)
 		}
-		// and return the created account
-		ctx.Render.JSON(w, http.StatusCreated, outdata)
 	}
 }
 
 // UpdateAccount actualiza los datos del account y devuelve el objeto actualizado.
 //   curl -ks https://b2d:8000/v1/accounts/342947fd-6c4b-4d2b-85ab-da14b37d047a -X PUT -d '{}' | jp -
-func (ctx *ApiContext) UpdateAccount(w http.ResponseWriter, r *http.Request) {
-	var newdata account.Account
-	var err error
-	var uid string
-	if uid = aloja.Params(r).ByName("uid"); uid == "" {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: "uid cannot be nil", Table: "accounts"})
-		return
-	}
-	err = json.NewDecoder(r.Body).Decode(&newdata)
-	if err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
-		logger.Error("func UpdateAccount", "error", err.Error())
-		return
-	}
-	if err = newdata.ValidateFields(); err != nil {
-		ctx.Render.JSON(w, http.StatusBadRequest, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
-		return
-	}
-	if logger.IsDebug() {
-		logger.Info("func UpdateAccount", "updated register", uid)
-	}
-
-	// TODO if newdata.UID is nil check if register exist in db _before_ update.
-	// If do not exist, return error and quit
-	if newdata.UID == nil {
-		newdata.UID = &uid
-	} else {
-		if *newdata.UID != uid {
-			ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error",
-				Action: "update",
-				Info:   fmt.Sprintf("provided uid's does not match: body: %v - path: %v", *newdata.UID, uid),
-				Table:  "accounts"})
-			logger.Error("func UpdateAccount", "error", "uid's does not match", "body", *newdata.UID, "path", uid)
-			return
+func UpdateAccount(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var newdata account.Account
+		var err error
+		var uid string
+		if uid = ctx.Param("uid"); uid == "" {
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: "uid cannot be nil", Table: "accounts"})
 		}
-	}
-	if _, err := ctx.DB.SaveAccount(&newdata); err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-		logger.Error("func UpdateAccount", "error", err.Error())
-		return
-	} else {
-		logger.Info("func UpdateAccount", "updated", "ok", "uid", *newdata.UID)
-		ctx.Render.JSON(w, http.StatusOK, newdata)
-		return
+		err = json.NewDecoder(ctx.Request().Body).Decode(&newdata)
+		if err != nil {
+			logger.LogE("func UpdateAccount", "p", "api", "f", "UpdateAccount()", "error", err.Error())
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
+		}
+		if err = newdata.ValidateFields(); err != nil {
+			return ctx.JSON(http.StatusBadRequest, &logMessage{Status: "error", Action: "update", Info: err.Error(), Table: "accounts"})
+		}
+		logger.LogD("updated register", "p", "api", "f", "UpdateAccount()", uid)
+
+		// TODO if newdata.UID is nil check if register exist in db _before_ update.
+		// If do not exist, return error and quit
+		if newdata.UID == nil {
+			newdata.UID = &uid
+		} else {
+			if *newdata.UID != uid {
+				logger.LogE("uid's does not match", "p", "api", "f", "UpdateAccount()", "body", *newdata.UID, "path", uid)
+				return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error",
+					Action: "update",
+					Info:   fmt.Sprintf("provided uid's does not match: body: %v - path: %v", *newdata.UID, uid),
+					Table:  "accounts"})
+			}
+		}
+		if err := m.SaveAccount(&newdata); err != nil {
+			logger.LogE("func UpdateAccount", "p", "api", "f", "UpdateAccount()", "error", err.Error())
+			return ctx.JSON(http.StatusInternalServerError, err.Error())
+		}
+		logger.LogD("updated account", "p", "api", "f", "UpdateAccount()", "uid", *newdata.UID)
+		return ctx.JSON(http.StatusOK, newdata)
 	}
 }
 
 // DeleteAccount elimina el account solicitado.
 //   curl -ks https://b2d:8000/v1/accounts/3 -X DELETE | jp -
-func (ctx *ApiContext) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	var uid string
-	if uid = aloja.Params(r).ByName("uid"); uid == "" {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "delete", Info: "uid cannot be nil", Table: "accounts"})
-		return
-	}
-	if n, err := ctx.DB.DeleteAccount(uid); err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-		logger.Error("func DeleteAccount", "error", err)
-		return
-	} else {
-		switch n {
-		case 0:
-			logger.Info("func DeleteAccount", "error", "uid no encontrado", "uid", uid)
-			ctx.Render.JSON(w, http.StatusOK, &logMessage{Status: "error", Action: "delete", Info: "no se ha encontrado el registro", Table: "accounts", Code: "RNF-11", UID: uid})
-		default:
-			logger.Info("func DeleteAccount", "registro eliminado", uid)
-			ctx.Render.JSON(w, http.StatusOK, &logMessage{Status: "ok", Action: "delete", Info: uid, Table: "accounts", UID: uid})
+func DeleteAccount(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var uid string
+		if uid = ctx.Param("uid"); uid == "" {
+			return ctx.JSON(http.StatusBadRequest, &logMessage{Status: "error", Action: "delete", Info: "uid cannot be nil", Table: "accounts"})
 		}
-		return
+		if err := m.DeleteAccount(uid); err != nil {
+			switch err {
+			case tryerr.ErrAccountNotFound:
+				logger.LogE("account delete error", "p", "api", "f", "DeleteAccount()", "error", err.Error(), "uid", uid)
+				return ctx.JSON(http.StatusOK, &logMessage{Status: "error", Action: "delete", Info: "no se ha encontrado el registro", Table: "accounts", Code: "RNF-11", UID: uid})
+			default:
+				logger.LogE("error deleting account", "p", "api", "f", "DeleteAccount()", "error", err)
+				return ctx.JSON(http.StatusInternalServerError, err.Error())
+			}
+		} else {
+			logger.LogD("func DeleteAccount", "registro eliminado", uid)
+			return ctx.JSON(http.StatusOK, &logMessage{Status: "ok", Action: "delete", Info: uid, Table: "accounts", UID: uid})
+		}
 	}
 }
 
 // GetAccountKeys obtiene la pareja de claves RSA pública y privada de la cuenta
 //   curl -ksi https://b2d:8000/v1/accounts/3/keys | jp -
-func (ctx *ApiContext) GetAccountKeys(w http.ResponseWriter, r *http.Request) {
-	var uid string
-	if uid = aloja.Params(r).ByName("uid"); uid == "" {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
-		return
+func GetAccountKeys(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var uid string
+		if uid = ctx.Param("uid"); uid == "" {
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
+		}
+		var res *keys.Key
+		var err error
+		if res, err = m.GetKeyByAccountID(uid); err != nil {
+			return ctx.JSON(http.StatusInternalServerError, err.Error())
+		}
+		return ctx.JSON(http.StatusOK, res)
 	}
-	var res *keys.Key
-	var err error
-	if res, err = ctx.DB.GetKeyByAccountID(uid); err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	ctx.Render.JSON(w, http.StatusOK, res)
 }
 
 // GetAccountTokens obtiene la pareja de claves RSA pública y privada de la cuenta
 //   curl -ksi https://b2d:8000/v1/accounts/3/tokens | jp -
-func (ctx *ApiContext) GetAccountTokens(w http.ResponseWriter, r *http.Request) {
-	var uid string
-	if uid = aloja.Params(r).ByName("uid"); uid == "" {
-		ctx.Render.JSON(w, http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
-		return
+func GetAccountTokens(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var uid string
+		if uid = ctx.Param("uid"); uid == "" {
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Action: "get", Info: "uid cannot be nil"})
+		}
+		var res string
+		var err error
+		if res, err = m.GetTokenByAccountID(uid); err != nil {
+			return ctx.JSON(http.StatusInternalServerError, err.Error())
+		}
+		return ctx.JSON(http.StatusOK, res)
 	}
-	var res string
-	var err error
-	if res, err = ctx.DB.GetTokenByAccountID(uid); err != nil {
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	ctx.Render.JSON(w, http.StatusOK, res)
 }

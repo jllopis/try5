@@ -4,31 +4,34 @@ import (
 	"net/http"
 
 	"github.com/jllopis/try5/account"
+	logger "github.com/jllopis/try5/log"
+	"github.com/jllopis/try5/store/manager"
+	"github.com/labstack/echo"
 )
 
-func (ctx *ApiContext) Authenticate(w http.ResponseWriter, r *http.Request) {
-	var res *account.Account
-	var err error
-	var email, password string
-	if email = r.FormValue("email"); email == "" {
-		ctx.Render.JSON(w, http.StatusBadRequest, &logMessage{Status: "error", Action: "authenticate", Info: "email cannot be nil"})
-		return
-	}
-	if password = r.FormValue("password"); password == "" {
-		ctx.Render.JSON(w, http.StatusBadRequest, &logMessage{Status: "error", Action: "authenticate", Info: "password cannot be nil"})
-		return
-	}
-	if res, err = ctx.DB.GetAccountByEmail(email); err != nil {
-		logger.Error("func Authenticate", "error", "account no encontrado", "email", email)
-		ctx.Render.JSON(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+// Authenticate get the email and passowrd as query or form params and return
+// a JSON object indicating if the authentication succed.
+func Authenticate(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var res *account.Account
+		var err error
+		var email, password string
+		if email = ctx.Form("email"); email == "" {
+			return ctx.JSON(http.StatusBadRequest, &logMessage{Status: "error", Action: "authenticate", Info: "email cannot be nil"})
+		}
+		if password = ctx.Form("password"); password == "" {
+			return ctx.JSON(http.StatusBadRequest, &logMessage{Status: "error", Action: "authenticate", Info: "password cannot be nil"})
+		}
+		if res, err = m.GetAccountByEmail(email); err != nil {
+			logger.LogE("missing account", "error", err.Error(), "email", email)
+			return ctx.JSON(http.StatusInternalServerError, err.Error())
+		}
 
-	err = res.MatchPassword(password)
-	if err != nil {
-		ctx.Render.JSON(w, http.StatusForbidden, map[string]interface{}{"status": "fail", "reason": err.Error()})
-		return
+		err = res.MatchPassword(password)
+		if err != nil {
+			return ctx.JSON(http.StatusForbidden, map[string]interface{}{"status": "fail", "reason": err.Error()})
+		}
+		res.Password = nil
+		return ctx.JSON(http.StatusOK, map[string]interface{}{"status": "ok", "account": res})
 	}
-	res.Password = nil
-	ctx.Render.JSON(w, http.StatusOK, map[string]interface{}{"status": "ok", "account": res})
 }
