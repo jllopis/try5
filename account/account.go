@@ -14,13 +14,13 @@ type Account struct {
 	ID       *int64     `json:"-" db:"id"`
 	UID      *string    `json:"uid" db:"uid"`
 	Email    *string    `json:"email" db:"email"`
-	Name     *string    `json:"name, omitempty" db:"name"`
-	Password *string    `json:"password, omitempty" db:"password"`
+	Name     *string    `json:"name,omitempty" db:"name"`
+	Password *string    `json:"password,omitempty" db:"password"`
 	Active   *bool      `json:"active" db:"active"`
-	Gravatar *string    `json:"gravatar" db:"gravatar"`
+	Gravatar *string    `json:"gravatar,omitempty" db:"gravatar"`
 	Created  *time.Time `json:"created" db:"created"`
 	Updated  *time.Time `json:"updated" db:"updated"`
-	Deleted  *bool      `json:"deleted, omitempty" db:"deleted"`
+	Deleted  *bool      `json:"deleted,omitempty" db:"deleted"`
 }
 
 var (
