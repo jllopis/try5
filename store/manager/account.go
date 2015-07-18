@@ -87,9 +87,22 @@ func (m *Manager) GetAccountByEmail(email string) (*account.Account, error) {
 
 // ExistAccount check the store for account presence. Returns a bool true if account
 // is found and false otherwise.
-// The account can be checked by uid, email or name. Search by name does not grant
-// uniqueness as can be name conflicts. OTOH, UID and email must be unique.
 // If we found an error querying the provider, an error is returned.
-func (m *Manager) ExistAccount(q string) (bool, error) {
+func (m *Manager) ExistAccount(uuid string) bool {
+	return m.provider.ExistAccount(uuid)
+}
+
+// SearchAccount search in the store the account. The search can be made by uid,
+// email or name. Search by name does not grant uniqueness as can be name
+// conflicts. OTOH, UID and email must be unique.
+// If we found an error querying the provider, an error is returned.
+// TODO(jllopis): implement this
+func (m *Manager) SearchAccount(uuid string) (bool, error) {
 	return false, tryerr.ErrNotImplemented
+}
+
+// GetTokenByAccountID return the JWT associated with the account identified by
+// the uid. If no tokens are found an error is returned.
+func (m *Manager) GetTokenByAccountID(uid string) (string, error) {
+	return "", tryerr.ErrNotImplemented
 }
