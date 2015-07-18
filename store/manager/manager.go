@@ -8,6 +8,7 @@ package manager
 
 import (
 	"github.com/jllopis/try5/account"
+	"github.com/jllopis/try5/keys"
 	"github.com/jllopis/try5/log"
 	"github.com/jllopis/try5/tryerr"
 )
@@ -24,20 +25,21 @@ type Storer interface {
 	SaveAccount(account *account.Account) error
 	DeleteAccount(uuid string) error
 	GetAccountByEmail(email string) (*account.Account, error)
+	ExistAccount(uuid string) bool
 	// Keys
-	//	LoadAllKeys() ([]*keys.Key, error)
-	//	LoadKey(kid string) (*keys.Key, error)
-	//	SaveKey(key *keys.Key) (*keys.Key, error)
-	//	DeleteKey(kid string) error
-	//	GetKeyByAccountID(uid string) (*keys.Key, error)
-	//	GetKeyByEmail(email string) (*keys.Key, error)
-	//	GetKeyByPub(pubkey []byte) (*keys.Key, error)
+	LoadAllKeys() ([]*keys.Key, error)
+	LoadKey(kid string) (*keys.Key, error)
+	SaveKey(key *keys.Key) error
+	DeleteKey(kid string) error
+	GetKeyByAccountID(uid string) (*keys.Key, error)
+	GetKeyByEmail(email string) (*keys.Key, error)
+	GetKeyByPub(pubkey []byte) (*keys.Key, error)
 	// Tokens
-	//	LoadToken(kid string) (string, error)
-	//	GetTokenByEmail(email string) (string, error)
-	//	GetTokenByAccountID(uid string) (string, error)
-	//	SaveToken(string) (string, error)
-	//	DeleteToken(kid string) error
+	LoadToken(kid string) (string, error)
+	GetTokenByEmail(email string) (string, error)
+	GetTokenByAccountID(uid string) (string, error)
+	SaveToken(tok *string) error
+	DeleteToken(kid string) error
 }
 
 const (
@@ -109,9 +111,9 @@ func (m *Manager) Init() error {
 }
 
 // GetStore return a valid Storer. If there is none registered an error is returned
-func (m *Manager) GetStore(name string) (Storer, error) {
-	if s, ok := registeredStores[name]; ok {
-		return s, nil
+func (m *Manager) GetStore() Storer {
+	if m.provider != nil {
+		return m.provider
 	}
-	return nil, tryerr.ErrStoreNotRegistered
+	return nil
 }
