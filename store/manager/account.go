@@ -100,9 +100,3 @@ func (m *Manager) ExistAccount(uuid string) bool {
 func (m *Manager) SearchAccount(uuid string) (bool, error) {
 	return false, tryerr.ErrNotImplemented
 }
-
-// GetTokenByAccountID return the JWT associated with the account identified by
-// the uid. If no tokens are found an error is returned.
-func (m *Manager) GetTokenByAccountID(uid string) (string, error) {
-	return "", tryerr.ErrNotImplemented
-}
