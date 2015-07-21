@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -145,9 +144,10 @@ func setupAPIRoutes(apisrv *echo.Group) {
 	apisrv.Post("/authenticate", api.Authenticate(mainManager))
 
 	// JWT
-	apisrv.Post("/jwt/token/:uid", http.HandlerFunc(apiCtx.NewJWTToken))
-	apisrv.Post("/jwt/token/validate", http.HandlerFunc(apiCtx.ValidateToken))
-	apisrv.Get("/jwt/token/validate", http.HandlerFunc(apiCtx.ValidateToken))
+	apisrv.Post("/jwt/token/:uid", api.NewJWTToken(mainManager))
+	apisrv.Get("/jwt/token/:uid", api.GetAccountJWTToken(mainManager))
+	apisrv.Post("/jwt/token/validate", api.ValidateToken(mainManager))
+	apisrv.Get("/jwt/token/validate", api.ValidateToken(mainManager))
 }
 
 // setupSignals configura la captura de señales de sistema y actúa basándose en ellas
