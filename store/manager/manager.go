@@ -38,7 +38,7 @@ type Storer interface {
 	LoadToken(kid string) (string, error)
 	GetTokenByEmail(email string) (string, error)
 	GetTokenByAccountID(uid string) (string, error)
-	SaveToken(tok *string) error
+	SaveToken(uid string, tok *string) error
 	DeleteToken(kid string) error
 }
 
