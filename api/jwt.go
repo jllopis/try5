@@ -37,7 +37,7 @@ func NewJWTToken(m *manager.Manager) echo.HandlerFunc {
 			logger.LogE("can not create token", "error", err.Error(), "uid", uid)
 			return ctx.JSON(http.StatusInternalServerError, err.Error())
 		}
-		token, err = m.SaveToken(token)
+		err = m.SaveToken(uid, &token)
 		if err != nil {
 			logger.LogE("can not save token", "pkg", "api", "func", "NewJWTToken()", "error", err.Error())
 			return ctx.JSON(http.StatusInternalServerError, err.Error())
@@ -91,5 +91,21 @@ func ValidateToken(m *manager.Manager) echo.HandlerFunc {
 			return ctx.JSON(http.StatusForbidden, map[string]interface{}{"status": "fail", "reason": err.Error()})
 		}
 		return ctx.JSON(http.StatusOK, map[string]interface{}{"status": "ok", "jwt": tokenStr})
+	}
+}
+
+// GetAccountJWTToken returns the JWT associated with the account. A valid uid must be provided.
+func GetAccountJWTToken(m *manager.Manager) echo.HandlerFunc {
+	return func(ctx *echo.Context) error {
+		var uid string
+		if uid = ctx.Param("uid"); uid == "" {
+			return ctx.JSON(http.StatusBadRequest, &logMessage{Status: "error", Action: "NewJWTToken", Info: "user id (uid) cannot be nil"})
+		}
+		var token string
+		var err error
+		if token, err = m.GetTokenByAccountID(uid); err != nil {
+			return ctx.JSON(http.StatusInternalServerError, &logMessage{Status: "error", Info: err.Error()})
+		}
+		return ctx.JSON(http.StatusOK, map[string]string{"token": token})
 	}
 }
