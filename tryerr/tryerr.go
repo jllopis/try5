@@ -23,12 +23,16 @@ var (
 	ErrKeyNotFound = errors.New("key not found")
 	// ErrNilKey is returned when the provided key is nil
 	ErrNilKey = errors.New("key is nil")
+	// ErrNilUID is returned when the provided key is empty
+	ErrNilUID = errors.New("user id is empty")
 	// ErrJWTWrongSigning is returned when the provided token signing method do not match the one expected
 	ErrJWTWrongSigningMethod = errors.New("unexpected signing method")
 	// ErrTokenNotFound is returned when the requested token is not found in the store
 	ErrTokenNotFound = errors.New("token not found")
 	// ErrInvalidToken  is returned when the token is not a JWT valid token
 	ErrInvalidToken = errors.New("token not valid")
+	// ErrNilToken is returned when the provided token is nil
+	ErrNilToken = errors.New("token is nil")
 	// ErrUnauthorized is returned if the provided token is not authorized to access the resource
 	ErrUnauthorized = errors.New("unauthorized token")
 	// ErrNotImplemented is returned when the functionality required is not implemented
