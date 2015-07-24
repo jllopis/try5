@@ -25,7 +25,7 @@ var (
 	ErrNilKey = errors.New("key is nil")
 	// ErrNilUID is returned when the provided key is empty
 	ErrNilUID = errors.New("user id is empty")
-	// ErrJWTWrongSigning is returned when the provided token signing method do not match the one expected
+	// ErrJWTWrongSigningMethod is returned when the provided token signing method do not match the one expected
 	ErrJWTWrongSigningMethod = errors.New("unexpected signing method")
 	// ErrTokenNotFound is returned when the requested token is not found in the store
 	ErrTokenNotFound = errors.New("token not found")
@@ -35,6 +35,12 @@ var (
 	ErrNilToken = errors.New("token is nil")
 	// ErrUnauthorized is returned if the provided token is not authorized to access the resource
 	ErrUnauthorized = errors.New("unauthorized token")
+	// ErrRbacRoleNotFound is returned when the role is not found
+	ErrRbacRoleNotFound = errors.New("RBAC role not found")
+	// ErrRbacPermissionNotFound is returned when the permission is not found
+	ErrRbacPermissionNotFound = errors.New("RBAC permission not found")
+	// ErrRbacUserNotProvided is returned when the affected user id is not provided
+	ErrRbacUserNotProvided = errors.New("RBAC user not found")
 	// ErrNotImplemented is returned when the functionality required is not implemented
 	ErrNotImplemented = errors.New("function not implemented")
 )
