@@ -1,7 +1,7 @@
 TRY5
 ====
 
-Version: v0.0.1
+*Version:* v0.0.1  -   *Status:* [![Build Status](https://travis-ci.org/jllopis/try5.svg)](https://travis-ci.org/jllopis/try5)
 
 Try5 is a new intent to develop an easy and basic authentication system. The functionalyty is exposed through REST Web Services.
 
@@ -15,14 +15,14 @@ You need:
 
 Proposed features:
 
-- HMAC Authentication
-- JWT Authentication
-- Plain user / password authentication
-- User management
-- Key/Token managemnt
-- RBAC Authorization
-- REST endpoint
-- RPC endpoint
+- ☑ Account management
+- ☑ Plain user / password authentication
+- ☑ RSA Key managemnt
+- ☑ JWT Authentication
+- ☐ HMAC Authentication
+- ☐ RBAC Authorization
+- ☑ REST endpoint
+- ☐ RPC endpoint
 
 Getting Started
 ---------------
