@@ -21,10 +21,8 @@ try5:
                 - TRY5_SSLCERT=/etc/try5/certs/cert.pem
                 - TRY5_SSLKEY=/etc/try5/certs/key.pem
                 - TRY5_PORT=9000
-                - LOGXI=*
-                - LOGXI_FORMAT=happy
-                - TRY5_VERBOSE=debug
-                - TRY5_STORE_PATH=/var/lib/try5/store.db
+                - TRY5_VERBOSE=true
+                - TRY5_STORE_PATH=/tmp/try5.db
                 - TRY5_STORE_TIMEOUT=10
                 #- TRY5_STORE_HOST=db.acb.info
                 #- TRY5_STORE_PORT=5432
